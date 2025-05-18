@@ -7,6 +7,7 @@ import 'package:hadaer_blady/core/utils/app_text_styles.dart';
 import 'package:hadaer_blady/core/widgets/row_profile_content.dart';
 import 'package:hadaer_blady/features/add_custom_product/presentation/add_custom_product_screen.dart';
 import 'package:hadaer_blady/features/auth/presentation/signin/view/signin_screen.dart';
+import 'package:hadaer_blady/features/farmer_request_orders/presentation/farmer_request_orders_screen.dart';
 import 'package:hadaer_blady/features/my_coop/presentation/my_coop_screen.dart';
 import 'package:hadaer_blady/features/my_orders/presentation/my_orders.dart';
 import 'package:hadaer_blady/features/profile/widgets/profile_image_widget.dart';
@@ -102,21 +103,26 @@ class _ProfileScreenBodyState extends State<ProfileScreenBody> {
                     titelText: 'إضافة عرض خاص ',
                   ),
                 ),
+              if (isCoopOwner)
+                InkWell(
+                  onTap: () {
+                    Navigator.pushNamed(context, FarmerRequestOrdersScreen.id);
+                  },
+                  child: const CustomeRowProfileContent(
+                    icon: Icons.inventory_2_outlined,
+                    titelText: 'الطلبات الواردة',
+                  ),
+                ),
               InkWell(
                 onTap: () {
                   Navigator.pushNamed(context, MyOrders.id);
                 },
                 child: const CustomeRowProfileContent(
-                  icon: Icons.inventory_2_outlined,
-                  titelText: 'طلباتى',
+                  icon: Icons.shopping_bag_outlined,
+                  titelText: 'مشترياتي',
                 ),
               ),
-              CustomeRowProfileContent(
-                icon: Icons.notifications_outlined,
-                titelText: 'الأشعارات',
-                secondIcon: Icons.notifications_active_outlined,
-                actionButton: () {},
-              ),
+
               const Row(
                 children: [Text('المساعدة', style: TextStyles.semiBold16)],
               ),

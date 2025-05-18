@@ -7,6 +7,7 @@ import 'package:hadaer_blady/core/utils/app_colors.dart';
 import 'package:hadaer_blady/core/utils/app_text_styles.dart';
 import 'package:hadaer_blady/core/widgets/custom_loading_indicator.dart';
 import 'package:hadaer_blady/core/widgets/custome_password_feild.dart';
+import 'package:hadaer_blady/core/widgets/row_profile_content.dart';
 import 'package:hadaer_blady/features/auth/presentation/signin/view/signin_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -25,9 +26,15 @@ class SettingsScreen extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
+            spacing: 12,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const SizedBox(height: 16),
+              CustomeRowProfileContent(
+                icon: Icons.notifications_outlined,
+                titelText: 'الأشعارات',
+                secondIcon: Icons.notifications_active_outlined,
+                actionButton: () {},
+              ),
               GestureDetector(
                 onTap: () => _showDeleteAccountDialog(context),
                 child: Container(

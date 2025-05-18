@@ -13,6 +13,7 @@ import 'package:hadaer_blady/features/checkout/presentation/checkout_screen.dart
 import 'package:hadaer_blady/features/checkout/presentation/congrates_screen.dart';
 import 'package:hadaer_blady/features/coops/presentation/coop_details.dart';
 import 'package:hadaer_blady/features/coops/presentation/coops_screen.dart';
+import 'package:hadaer_blady/features/farmer_request_orders/presentation/farmer_request_orders_screen.dart';
 import 'package:hadaer_blady/features/home/presentation/home_screen.dart';
 import 'package:hadaer_blady/features/home/presentation/widgets/custom_offers_list/offer_carousel.dart';
 import 'package:hadaer_blady/features/my_coop/presentation/my_coop_screen.dart';
@@ -28,6 +29,10 @@ import 'package:hadaer_blady/features/who_we_are/presentation/who_we_are_screen.
 
 Route<dynamic> onGenerateRoute(RouteSettings settings) {
   switch (settings.name) {
+    case FarmerRequestOrdersScreen.id:
+      return MaterialPageRoute(
+        builder: (_) => const FarmerRequestOrdersScreen(),
+      );
     case MyCoopScreen.id:
       return MaterialPageRoute(builder: (_) => const MyCoopScreen());
     case CustomProductDetailScreen.id:

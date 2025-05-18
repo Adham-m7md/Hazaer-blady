@@ -28,10 +28,24 @@ class CheckoutService {
         throw Exception('بيانات المستخدم غير مكتملة');
       }
 
+      // استخراج farmer_id من أول عنصر في cartItems
+      final farmerId = cartItems.first['productData']['farmer_id'] as String?;
+      if (farmerId == null || farmerId.isEmpty) {
+        throw Exception('معرف صاحب الحظيرة غير متوفر في عناصر السلة');
+      }
+
+      // التحقق من أن جميع العناصر في السلة تخص نفس صاحب الحظيرة
+      for (var item in cartItems) {
+        if (item['productData']['farmer_id'] != farmerId) {
+          throw Exception('يجب أن تكون جميع العناصر من نفس صاحب الحظيرة');
+        }
+      }
+
       // إعداد بيانات الطلب
       final orderData = {
         'userData': userData,
         'cartItems': cartItems,
+        'farmer_id': farmerId,
         'timestamp': FieldValue.serverTimestamp(),
         'status': 'pending',
       };

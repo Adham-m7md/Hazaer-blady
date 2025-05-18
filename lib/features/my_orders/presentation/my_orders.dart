@@ -21,7 +21,7 @@ class MyOrders extends StatelessWidget {
       return Scaffold(
         backgroundColor: AppColors.kWiteColor,
         appBar: buildAppBarWithArrowBackButton(
-          title: 'طلباتي',
+          title: 'مشترياتي',
           context: context,
         ),
         body: const Center(
@@ -35,7 +35,10 @@ class MyOrders extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppColors.kWiteColor,
-      appBar: buildAppBarWithArrowBackButton(title: 'طلباتي', context: context),
+      appBar: buildAppBarWithArrowBackButton(
+        title: 'مشترياتي',
+        context: context,
+      ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: khorizintalPadding),
         child: StreamBuilder<QuerySnapshot>(
@@ -67,7 +70,7 @@ class MyOrders extends StatelessWidget {
             if (orders.isEmpty) {
               return const Center(
                 child: Text(
-                  'لا توجد طلبات حاليًا',
+                  ' ليس لديك مشتريات, قم بالتسوق الأن !',
                   style: TextStyles.semiBold16,
                 ),
               );
