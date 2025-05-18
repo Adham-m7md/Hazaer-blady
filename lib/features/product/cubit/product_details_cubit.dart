@@ -3,7 +3,9 @@ import 'dart:developer';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:hadaer_blady/core/services/farmer_service.dart';
 import 'package:hadaer_blady/core/services/firebase_auth_service.dart';
+import 'package:hadaer_blady/core/services/get_it.dart';
 import 'package:hadaer_blady/features/product/cubit/product_details_state.dart';
 
 class ProductDetailsCubit extends Cubit<ProductDetailsState> {
@@ -11,6 +13,8 @@ class ProductDetailsCubit extends Cubit<ProductDetailsState> {
     : super(const ProductDetailsState.initial());
 
   final FirebaseAuthService _firebaseAuthService;
+  final farmerService = getIt<FarmerService>();
+
   static const int _quantityStep = 50;
 
   Future<void> fetchProductData(
@@ -70,7 +74,7 @@ class ProductDetailsCubit extends Cubit<ProductDetailsState> {
 
   Future<Map<String, dynamic>> fetchFarmerData(String farmerId) async {
     try {
-      final farmerData = await _firebaseAuthService.getFarmerById(farmerId);
+      final farmerData = await farmerService.getFarmerById(farmerId);
       return farmerData.isNotEmpty
           ? farmerData
           : {'name': 'حظيرة غير معروفة', 'city': 'غير محدد'};

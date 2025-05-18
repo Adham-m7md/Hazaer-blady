@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:hadaer_blady/core/services/custom_product_servise.dart';
+import 'package:hadaer_blady/core/services/farmer_service.dart';
 import 'package:hadaer_blady/core/services/firebase_auth_service.dart';
 import 'package:hadaer_blady/core/services/get_it.dart';
 import 'package:hadaer_blady/core/services/rating_service.dart';
@@ -71,6 +72,8 @@ class CustomProductDetailScreen extends StatefulWidget {
 
 class _CustomProductDetailScreenState extends State<CustomProductDetailScreen> {
   final FirebaseAuthService firebaseAuthService = getIt<FirebaseAuthService>();
+  final FarmerService farmerService = getIt<FarmerService>();
+
   final CustomProductService customProductService =
       getIt<CustomProductService>();
   String _currentUserId = '';
@@ -105,7 +108,7 @@ class _CustomProductDetailScreenState extends State<CustomProductDetailScreen> {
         log('Empty farmerId provided');
         return {};
       }
-      final farmerData = await firebaseAuthService.getFarmerById(farmerId);
+      final farmerData = await farmerService.getFarmerById(farmerId);
       log('Fetched farmer data: $farmerData');
       return farmerData;
     } catch (e) {

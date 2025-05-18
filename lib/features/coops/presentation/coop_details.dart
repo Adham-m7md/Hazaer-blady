@@ -1,10 +1,10 @@
 import 'dart:developer';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hadaer_blady/core/constants.dart';
+import 'package:hadaer_blady/core/services/farmer_service.dart';
 import 'package:hadaer_blady/core/services/firebase_auth_service.dart';
 import 'package:hadaer_blady/core/services/get_it.dart';
 import 'package:hadaer_blady/core/services/rating_service.dart';
@@ -38,6 +38,8 @@ class CoopDetails extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authService = getIt<FirebaseAuthService>();
+    final FarmerService farmerService = getIt<FarmerService>();
+
     log('CoopDetails build with farmerId: $farmerId');
 
     if (farmerId.isEmpty) {
@@ -76,7 +78,7 @@ class CoopDetails extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: AppColors.kWiteColor,
         title: FutureBuilder<Map<String, dynamic>>(
-          future: authService.getFarmerById(farmerId),
+          future: farmerService.getFarmerById(farmerId),
           builder: (context, snapshot) {
             String title;
             if (snapshot.connectionState == ConnectionState.waiting) {
@@ -114,7 +116,7 @@ class CoopDetails extends StatelessWidget {
         ],
       ),
       body: FutureBuilder<Map<String, dynamic>>(
-        future: authService.getFarmerById(farmerId),
+        future: farmerService.getFarmerById(farmerId),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());

@@ -1,9 +1,7 @@
 import 'dart:developer';
-import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:hadaer_blady/core/errors/exeptions.dart';
 import 'package:hadaer_blady/core/services/location_service.dart';
 import 'package:hadaer_blady/core/services/shared_prefs_singleton.dart';
@@ -11,7 +9,6 @@ import 'package:hadaer_blady/core/services/shared_prefs_singleton.dart';
 class FirebaseAuthService {
   final FirebaseAuth auth = FirebaseAuth.instance;
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
-  final FirebaseStorage _storage = FirebaseStorage.instance;
 
   // Helper to clean input strings
   String _cleanInput(String input) => input.trim();
@@ -33,6 +30,9 @@ class FirebaseAuthService {
     if (city != null) await Prefs.setUserCity(city);
     if (profileImageUrl != null) {
       await Prefs.setProfileImageUrl(profileImageUrl);
+    }
+    if (jobTitle != null) {
+      await Prefs.setJobTitle(jobTitle);
     }
     log(
       'Saved to Prefs: name=$name, email=$email, phone=$phone, address=$address, city=$city, profileImageUrl=$profileImageUrl',
@@ -64,28 +64,6 @@ class FirebaseAuthService {
         );
       default:
         return CustomException(message: 'حدث خطأ ما، الرجاء المحاولة مرة أخرى');
-    }
-  }
-
-  // Upload profile image to Firebase Storage
-  Future<String> uploadProfileImage(File image) async {
-    try {
-      final user = auth.currentUser;
-      if (user == null) {
-        throw CustomException(message: 'لم يتم تسجيل الدخول');
-      }
-
-      final storageRef = _storage.ref().child(
-        'profile_images/${user.uid}/profile.jpg',
-      );
-      final uploadTask = await storageRef.putFile(image);
-      final downloadUrl = await uploadTask.ref.getDownloadURL();
-      await Prefs.setProfileImageUrl(downloadUrl);
-      log('Profile image uploaded successfully: $downloadUrl');
-      return downloadUrl;
-    } catch (e) {
-      log('Error uploading profile image: $e');
-      throw CustomException(message: 'حدث خطأ أثناء رفع الصورة');
     }
   }
 
@@ -162,6 +140,7 @@ class FirebaseAuthService {
           address: cleanAddress,
           city: cleanCity,
           profileImageUrl: cleanProfileImageUrl,
+          jobTitle: jobTitle,
         );
         log('User created successfully with ID: ${user.uid}');
       }
@@ -218,6 +197,7 @@ class FirebaseAuthService {
     final userAddress = userData['address'] as String? ?? '';
     final userCity = userData['city'] as String? ?? '';
     final userProfileImageUrl = userData['profile_image_url'] as String? ?? '';
+    final userJobTitle = userData['job_title'] as String? ?? '';
 
     await _saveUserToPrefs(
       name: userName,
@@ -226,6 +206,7 @@ class FirebaseAuthService {
       address: userAddress,
       city: userCity,
       profileImageUrl: userProfileImageUrl,
+      jobTitle: userJobTitle,
     );
     log('Sign in successful with email');
     return user;
@@ -255,6 +236,7 @@ class FirebaseAuthService {
     final userAddress = userData['address'] as String? ?? '';
     final userCity = userData['city'] as String? ?? '';
     final userProfileImageUrl = userData['profile_image_url'] as String? ?? '';
+    final userJobTitle = userData['job_title'] as String? ?? '';
 
     await _saveUserToPrefs(
       name: userName,
@@ -263,6 +245,7 @@ class FirebaseAuthService {
       address: userAddress,
       city: userCity,
       profileImageUrl: userProfileImageUrl,
+      jobTitle: userJobTitle,
     );
     log('User found with email: $userEmail');
     return user;
@@ -308,76 +291,7 @@ class FirebaseAuthService {
     return null;
   }
 
-  // Update user data
-  Future<void> updateUserData({
-    String? name,
-    String? phone,
-    String? address,
-    String? city,
-    String? profileImageUrl,
-  }) async {
-    try {
-      final user = auth.currentUser;
-      if (user == null) {
-        throw CustomException(message: 'لم يتم تسجيل الدخول');
-      }
-
-      final updateData = <String, dynamic>{};
-      if (name != null && _cleanInput(name).isNotEmpty) {
-        updateData['name'] = _cleanInput(name);
-      }
-      if (phone != null && _cleanInput(phone).isNotEmpty) {
-        updateData['phone'] = _cleanInput(phone);
-      }
-      if (address != null) {
-        updateData['address'] = _cleanInput(address);
-      }
-      if (city != null) {
-        updateData['city'] = _cleanInput(city);
-      }
-      if (profileImageUrl != null) {
-        updateData['profile_image_url'] = _cleanInput(profileImageUrl);
-      }
-
-      if (updateData.isNotEmpty) {
-        await firestore.collection('users').doc(user.uid).update(updateData);
-      }
-
-      // تحديث بيانات الموقع
-      final position = await LocationService().getUserLocation();
-      if (position != null) {
-        await firestore
-            .collection('users')
-            .doc(user.uid)
-            .collection('location')
-            .doc('current')
-            .set({
-              'latitude': position.latitude,
-              'longitude': position.longitude,
-              'timestamp': FieldValue.serverTimestamp(),
-            });
-        log(
-          'Location updated for user ${user.uid}: lat=${position.latitude}, lng=${position.longitude}',
-        );
-      } else {
-        log('No location data available for user ${user.uid}');
-      }
-
-      await _saveUserToPrefs(
-        name: name ?? Prefs.getUserName(),
-        email: await getCurrentUserEmail(),
-        phone: phone,
-        address: address,
-        city: city,
-        profileImageUrl: profileImageUrl,
-      );
-      log('User data updated successfully for ID: ${user.uid}');
-    } catch (e) {
-      log('Unexpected error in updateUserData: $e');
-      throw CustomException(message: 'حدث خطأ أثناء تحديث البيانات');
-    }
-  } // Reset password
-
+  // Reset password
   Future<void> resetPassword({required String email}) async {
     try {
       final cleanEmail = _cleanInput(email);
@@ -420,47 +334,6 @@ class FirebaseAuthService {
 
   // Get current user
   User? getCurrentUser() => auth.currentUser;
-
-  // Get farmers
-  Future<List<Map<String, dynamic>>> getFarmers() async {
-    try {
-      log('Fetching farmers from Firestore');
-      final querySnapshot =
-          await firestore
-              .collection('users')
-              .where('job_title', isEqualTo: 'صاحب حظيرة')
-              .get();
-
-      final farmers =
-          querySnapshot.docs.map((doc) {
-            final data = doc.data();
-            data['uid'] = doc.id;
-            return data;
-          }).toList();
-
-      log('Fetched ${farmers.length} farmers successfully');
-      return farmers;
-    } catch (e) {
-      log('Error fetching farmers: $e');
-      throw CustomException(message: 'حدث خطأ أثناء جلب بيانات أصحاب المزارع');
-    }
-  }
-
-  // Get farmer by ID
-  Future<Map<String, dynamic>> getFarmerById(String id) async {
-    try {
-      final doc = await firestore.collection('users').doc(id).get();
-      if (!doc.exists) {
-        throw CustomException(message: 'الحضيرة غير موجودة');
-      }
-      final data = doc.data()!;
-      data['uid'] = doc.id;
-      return data;
-    } catch (e) {
-      log('Error fetching farmer by ID: $e');
-      throw CustomException(message: 'حدث خطأ أثناء جلب بيانات الحضيرة');
-    }
-  }
 
   // Check if user is logged in
   bool isUserLoggedIn() => auth.currentUser != null;
@@ -592,33 +465,6 @@ class FirebaseAuthService {
     } catch (e) {
       log('Unexpected error in deleteUserAccount: $e');
       throw CustomException(message: 'حدث خطأ ما، الرجاء المحاولة مرة أخرى');
-    }
-  }
-
-  Future<void> updateFarmerLocation(String userId) async {
-    try {
-      final position = await LocationService().getUserLocation();
-      if (position != null) {
-        await firestore
-            .collection('users')
-            .doc(userId)
-            .collection('location')
-            .doc('current')
-            .set({
-              'latitude': position.latitude,
-              'longitude': position.longitude,
-              'timestamp': FieldValue.serverTimestamp(),
-            });
-        log(
-          'Farmer location updated for user $userId: lat=${position.latitude}, lng=${position.longitude}',
-        );
-      } else {
-        log('No location data available for farmer $userId');
-        throw CustomException(message: 'تعذر الحصول على موقع التاجر');
-      }
-    } catch (e) {
-      log('Error updating farmer location: $e');
-      throw CustomException(message: 'حدث خطأ أثناء تحديث موقع التاجر');
     }
   }
 }

@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:hadaer_blady/core/constants.dart';
+import 'package:hadaer_blady/core/services/farmer_service.dart';
 import 'package:hadaer_blady/core/services/firebase_auth_service.dart';
 import 'package:hadaer_blady/core/services/get_it.dart';
 import 'package:hadaer_blady/core/services/rating_service.dart';
@@ -22,6 +23,7 @@ class CoopsScreen extends StatefulWidget {
 
 class _CoopsScreenState extends State<CoopsScreen> {
   final FirebaseAuthService authService = getIt<FirebaseAuthService>();
+  final FarmerService farmerService = getIt<FarmerService>();
   final RatingService ratingService = RatingService();
   String selectedFilter = 'highest_rated'; // Default to highest rated
 
@@ -78,7 +80,7 @@ class _CoopsScreenState extends State<CoopsScreen> {
             ),
             Expanded(
               child: FutureBuilder<List<Map<String, dynamic>>>(
-                future: authService.getFarmers(),
+                future: farmerService.getFarmers(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CustomLoadingIndicator());
@@ -360,7 +362,8 @@ class _CoopsScreenState extends State<CoopsScreen> {
       return null;
     }
   }
-// دالة لفرز الحظائر حسب المسافة
+
+  // دالة لفرز الحظائر حسب المسافة
   Future<List<Map<String, dynamic>>> _sortFarmersByDistance(
     List<Map<String, dynamic>> farmers,
   ) async {

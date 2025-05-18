@@ -5,11 +5,13 @@ import 'package:hadaer_blady/core/errors/exeptions.dart';
 import 'package:hadaer_blady/core/services/firebase_auth_service.dart';
 import 'package:hadaer_blady/core/services/get_it.dart';
 import 'package:hadaer_blady/core/services/shared_prefs_singleton.dart';
+import 'package:hadaer_blady/core/services/user_profile_service.dart';
 
 part 'profile_state.dart';
 
 class ProfileCubit extends Cubit<ProfileState> {
   final _firebaseAuthService = getIt<FirebaseAuthService>();
+  final _userService = getIt<UserProfileService>();
 
   ProfileCubit() : super(ProfileInitial());
 
@@ -92,13 +94,11 @@ class ProfileCubit extends Cubit<ProfileState> {
 
       // Upload image if a new one is selected
       if (profileImage != null) {
-        profileImageUrl = await _firebaseAuthService.uploadProfileImage(
-          profileImage,
-        );
+        profileImageUrl = await _userService.uploadProfileImage(profileImage);
       }
 
       // Update user data in Firebase - send empty strings to clear values if needed
-      await _firebaseAuthService.updateUserData(
+      await _userService.updateUserData(
         name: name?.isNotEmpty == true ? name : null,
         phone: phone, // Send phone as-is, including empty string to clear
         city: city, // Send city as-is, including empty string to clear
