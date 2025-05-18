@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:hadaer_blady/core/constants.dart';
 import 'package:hadaer_blady/core/functions/build_app_bar_with_arrow_back_button.dart';
@@ -75,7 +76,6 @@ class FarmerRequestOrdersScreen extends StatelessWidget {
 
             return SingleChildScrollView(
               child: Column(
-                spacing: 12,
                 children: [
                   const SizedBox(height: 8),
                   ...orders.map((doc) {
@@ -128,8 +128,10 @@ class CustomFarmerOrder extends StatelessWidget {
         timestamp != null
             ? DateFormat('dd MMMM yyyy', 'ar').format(timestamp)
             : 'غير متوفر';
+    final phoneNumber = userData['phone'] ?? 'غير متوفر';
 
     return Container(
+      margin: const EdgeInsets.only(bottom: 12),
       decoration: const BoxDecoration(
         color: AppColors.kFillGrayColor,
         borderRadius: BorderRadius.all(Radius.circular(12)),
@@ -214,12 +216,8 @@ class CustomFarmerOrder extends StatelessWidget {
             children: [
               const Icon(Icons.phone, color: AppColors.kGrayColor, size: 20),
               const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'رقم الهاتف: ${userData['phone'] ?? 'غير متوفر'}',
-                  style: TextStyles.semiBold13,
-                ),
-              ),
+              // تم تحديث عرض رقم الهاتف هنا ليكون قابلاً للنسخ
+              Expanded(child: CopyablePhoneNumber(phoneNumber: phoneNumber)),
             ],
           ),
           const SizedBox(height: 4),
@@ -301,6 +299,89 @@ class CustomFarmerOrder extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+// إضافة ويدجت جديد للتعامل مع أرقام الهواتف القابلة للنسخ
+class CopyablePhoneNumber extends StatefulWidget {
+  final String phoneNumber;
+
+  const CopyablePhoneNumber({super.key, required this.phoneNumber});
+
+  @override
+  State<CopyablePhoneNumber> createState() => _CopyablePhoneNumberState();
+}
+
+class _CopyablePhoneNumberState extends State<CopyablePhoneNumber> {
+  bool _isCopied = false;
+
+  // نسخ رقم الهاتف إلى الحافظة
+  void _copyToClipboard() {
+    if (widget.phoneNumber != 'غير متوفر') {
+      Clipboard.setData(ClipboardData(text: widget.phoneNumber));
+      setState(() {
+        _isCopied = true;
+      });
+
+      // إظهار رسالة تأكيدية بنجاح النسخ
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'تم نسخ رقم الهاتف: ${widget.phoneNumber}',
+            textAlign: TextAlign.right,
+            style: const TextStyle(fontFamily: 'Tajawal'),
+          ),
+          backgroundColor: AppColors.kprimaryColor,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+
+      // إعادة الأيقونة للحالة الطبيعية بعد ثانيتين
+      Future.delayed(const Duration(seconds: 2), () {
+        if (mounted) {
+          setState(() {
+            _isCopied = false;
+          });
+        }
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: _copyToClipboard,
+      borderRadius: BorderRadius.circular(4),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 2),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text.rich(
+                TextSpan(
+                  children: [
+                    const TextSpan(text: 'رقم الهاتف: '),
+                    TextSpan(
+                      text: widget.phoneNumber,
+                      style: TextStyles.semiBold13.copyWith(
+                        color: AppColors.kprimaryColor,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Icon(
+              _isCopied ? Icons.check_circle : Icons.copy,
+              color: _isCopied ? Colors.green : AppColors.kprimaryColor,
+              size: 18,
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -136,7 +136,7 @@ class CustomOrder extends StatelessWidget {
         collapsedBackgroundColor: AppColors.kFillGrayColor,
         iconColor: AppColors.kGrayColor,
         collapsedIconColor: AppColors.kGrayColor,
-        leading: SvgPicture.asset(Assets.imagesOrder),
+        leading: SvgPicture.asset(Assets.imagesCartCheck),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,

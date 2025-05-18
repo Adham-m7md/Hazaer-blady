@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
-
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -14,7 +13,6 @@ import 'package:hadaer_blady/core/utils/app_colors.dart';
 import 'package:hadaer_blady/features/splash/splash_screen.dart';
 import 'package:hadaer_blady/firebase_options.dart';
 import 'package:hadaer_blady/generated/l10n.dart';
-
 import 'core/services/custom_product_servise.dart';
 import 'core/services/shared_prefs_singleton.dart';
 import 'features/add_custom_product/presentation/custom_product_screen_details.dart';
