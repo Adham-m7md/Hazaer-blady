@@ -199,6 +199,7 @@ class _CustomProductDetailScreenState extends State<CustomProductDetailScreen> {
                 (route) => false,
               );
             },
+            
           ),
     );
   }

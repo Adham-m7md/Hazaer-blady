@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:hadaer_blady/core/utils/app_colors.dart';
 import 'package:hadaer_blady/core/utils/app_text_styles.dart';
 import 'package:hadaer_blady/core/utils/svg_images.dart';
@@ -11,9 +11,13 @@ class CustomeShowDialog extends StatelessWidget {
     required this.text,
     required this.buttonText,
     required this.onPressed,
+    this.imagePath = Assets.imagesCongrates,
   });
-  final String text, buttonText;
+
+  final String text;
+  final String buttonText;
   final VoidCallback onPressed;
+  final String imagePath;
 
   @override
   Widget build(BuildContext context) {
@@ -24,15 +28,24 @@ class CustomeShowDialog extends StatelessWidget {
         child: Column(
           spacing: 36,
           children: [
-            SvgPicture.asset(Assets.imagesCongrates),
-
+            SvgPicture.asset(
+              imagePath,
+              width:
+                  imagePath != Assets.imagesCongrates
+                      ? 100
+                      : 120, // حجم أصغر لغير التهنئة
+              height:
+                  imagePath != Assets.imagesCongrates
+                      ? 100
+                      : 120, // حجم أكبر للتهنئة
+            ),
             Text(
               text,
               style: TextStyles.semiBold16,
               textAlign: TextAlign.center,
-              maxLines: 2,
+              maxLines: 4,
             ),
-            CustomButton(onPressed: () => onPressed(), text: buttonText),
+            CustomButton(onPressed: onPressed, text: buttonText),
           ],
         ),
       ),

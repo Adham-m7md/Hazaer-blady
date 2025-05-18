@@ -98,6 +98,12 @@ class FirebaseAuthService {
 
       final user = credential.user;
       if (user != null) {
+        // إرسال رابط تأكيد البريد الإلكتروني
+        if (!user.emailVerified) {
+          await user.sendEmailVerification();
+          log('Verification email sent to: $cleanEmail');
+        }
+
         // تسجيل بيانات المستخدم الأساسية
         await firestore.collection('users').doc(user.uid).set({
           'name': cleanName,
@@ -111,6 +117,7 @@ class FirebaseAuthService {
           'reviews': reviews ?? 0,
           'offers': offers ?? 0,
           'created_at': FieldValue.serverTimestamp(),
+          'email_verified': false,
         });
 
         // تسجيل بيانات الموقع في subcollection
@@ -155,6 +162,50 @@ class FirebaseAuthService {
     }
   }
 
+  // Resend email verification
+  Future<void> resendEmailVerification() async {
+    try {
+      final user = auth.currentUser;
+      if (user != null && !user.emailVerified) {
+        await user.sendEmailVerification();
+        log('Verification email resent to: ${user.email}');
+      } else if (user == null) {
+        throw CustomException(message: 'لم يتم تسجيل الدخول');
+      } else {
+        throw CustomException(message: 'البريد الإلكتروني تم تأكيده بالفعل');
+      }
+    } on FirebaseAuthException catch (e) {
+      log('FirebaseAuthException in resendEmailVerification: $e');
+      throw _handleFirebaseAuthException(e);
+    } catch (e) {
+      log('Unexpected error in resendEmailVerification: $e');
+      throw CustomException(message: 'حدث خطأ ما، الرجاء المحاولة مرة أخرى');
+    }
+  }
+
+  // Check email verification status
+  Future<bool> checkEmailVerification() async {
+    try {
+      final user = auth.currentUser;
+      if (user != null) {
+        await user.reload();
+        if (user.emailVerified) {
+          await firestore.collection('users').doc(user.uid).update({
+            'email_verified': true,
+          });
+          log('Email verification status updated for user: ${user.uid}');
+          return true;
+        }
+        return false;
+      }
+      throw CustomException(message: 'لم يتم تسجيل الدخول');
+    } catch (e) {
+      log('Error checking email verification: $e');
+      throw CustomException(message: 'حدث خطأ أثناء التحقق من حالة التأكيد');
+    }
+  }
+
+  // Sign in with email or phone
   // Sign in with email or phone
   Future<User> signInWithEmailOrPhone({
     required String emailOrPhone,
@@ -167,14 +218,27 @@ class FirebaseAuthService {
         'Attempting to sign in with ${isEmail ? "email" : "phone"}: $cleanInput',
       );
 
+      User user;
       if (isEmail) {
-        return await _signInWithEmail(cleanInput, password);
+        user = await _signInWithEmail(cleanInput, password);
       } else {
-        return await _signInWithPhone(cleanInput, password);
+        user = await _signInWithPhone(cleanInput, password);
       }
+
+      // التحقق من تأكيد البريد الإلكتروني
+      await user.reload();
+      if (!user.emailVerified) {
+        log('Email not verified for user: ${user.email}');
+        throw CustomException(message: 'يرجى تأكيد بريدك الإلكتروني أولاً');
+      }
+
+      return user;
     } on FirebaseAuthException catch (e) {
       log('FirebaseAuthException in signInWithEmailOrPhone: $e');
       throw _handleFirebaseAuthException(e);
+    } on CustomException catch (e) {
+      log('CustomException in signInWithEmailOrPhone: $e');
+      rethrow;
     } catch (e) {
       log('Unexpected error in signInWithEmailOrPhone: $e');
       throw CustomException(message: 'حدث خطأ ما، الرجاء المحاولة مرة أخرى');

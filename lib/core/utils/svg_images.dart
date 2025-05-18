@@ -34,6 +34,10 @@ class Assets {
   /// assets/images/coop.jpeg
   static const String imagesCoop = "assets/images/coop.jpeg";
 
+  /// Assets for imagesEror
+  /// assets/images/eror.svg
+  static const String imagesEror = "assets/images/eror.svg";
+
   /// Assets for imagesLibya
   /// assets/images/libya.png
   static const String imagesLibya = "assets/images/libya.png";
