@@ -9,7 +9,7 @@ import 'package:url_launcher/url_launcher.dart';
 class WhoWeAreScreen extends StatelessWidget {
   const WhoWeAreScreen({super.key});
   static const String id = 'WhoWeAreScreen';
-  final String phoneNumber = "+218926827172";
+  final String phoneNumber = "+218916637172";
   final String message = "مرحبًا، أريد الاستفسار عن خدمات حضائر بلادي";
   Future<void> _openWhatsApp(BuildContext context) async {
     final String encodedMessage = Uri.encodeComponent(message);
@@ -44,7 +44,7 @@ class WhoWeAreScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Text(
-                '"حضائر بلادي" هو تطبيق مبتكر يربط بين  اصحاب حظائر الدجاج اللاحم  والتجار، مما يسهل عملية بيع وشراء الدجاج اللاحم ومستلزمات الحظائر بكل سهولة ويسر عبر التطبيق، يمكنك استكشاف العروض المتاحة، التفاوض على الأسعار، وإتمام الصفقات بأمان وسرعة. سواء كنت مربيًا أو تاجرًا، ستجد في "حضائر بلادي" أداة فعالة لتنمية أعمالك وتوسيع شبكتك التجارية.\nابدأ الآن وسهّل تجارتك مع حضائر بلادي!',
+                '"حظائر بلادي" هو تطبيق مبتكر يربط بين  اصحاب حظائر الدجاج اللاحم  والتجار، مما يسهل عملية بيع وشراء الدجاج اللاحم ومستلزمات الحظائر بكل سهولة ويسر عبر التطبيق، يمكنك استكشاف العروض المتاحة، التفاوض على الأسعار، وإتمام الصفقات بأمان وسرعة. سواء كنت مربيًا أو تاجرًا، ستجد في "حظائر بلادي" أداة فعالة لتنمية أعمالك وتوسيع شبكتك التجارية.\nابدأ الآن وسهّل تجارتك مع حظائر بلادي!',
                 textAlign: TextAlign.center,
                 style: TextStyles.semiBold16,
               ),
