@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -111,6 +113,7 @@ class CustomOrder extends StatelessWidget {
     final userData = orderData['userData'] as Map<String, dynamic>? ?? {};
     final timestamp = (orderData['timestamp'] as Timestamp?)?.toDate();
     final status = orderData['status'] as String? ?? 'غير معروف';
+    log('Order $orderId status: $status'); // إضافة log
     final totalPrice = cartItems.fold<double>(
       0,
       (sum, item) => sum + (item['totalPrice'] as num).toDouble(),

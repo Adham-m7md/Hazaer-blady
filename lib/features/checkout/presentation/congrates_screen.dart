@@ -27,8 +27,15 @@ class CongratesScreen extends StatelessWidget {
             SvgPicture.asset(Assets.imagesCongrates),
             const SizedBox(height: 40),
             const Text('تم إرسال طلبك بنجاح', style: TextStyles.bold19),
+            const Text(
+              'سيتم التواصل معك من قبل صاحب الحظيرة ',
+              style: TextStyles.bold16,
+            ),
 
-            Text('رقم الطلب: $orderNumber', style: TextStyles.bold16),
+            Text(
+              'رقم الطلب: $orderNumber',
+              style: TextStyles.bold16.copyWith(color: AppColors.kGrayColor),
+            ),
 
             Padding(
               padding: const EdgeInsets.all(16.0),

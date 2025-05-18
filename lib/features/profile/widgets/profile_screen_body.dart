@@ -145,11 +145,11 @@ class _ProfileScreenBodyState extends State<ProfileScreenBody> {
                 ),
               ),
               if (isAdmin) ...[
-                SizedBox(height: context.screenHeight * 0.04),
+                SizedBox(height: context.screenHeight * 0.02),
               ] else if (isCoopOwner) ...[
                 SizedBox(height: context.screenHeight * 0.1),
               ] else ...[
-                SizedBox(height: context.screenHeight * 0.15),
+                SizedBox(height: context.screenHeight * 0.2),
               ],
               GestureDetector(
                 onTap: () {

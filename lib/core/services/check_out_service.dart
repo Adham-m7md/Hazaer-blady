@@ -46,11 +46,12 @@ class CheckoutService {
         'userData': userData,
         'cartItems': cartItems,
         'farmer_id': farmerId,
+        'user_id': user.uid, // إضافة معرف المشتري
         'timestamp': FieldValue.serverTimestamp(),
         'status': 'pending',
       };
 
-      // كتابة الطلب إلى Firestore
+      // كتابة الطلب إلى Firestore (للمستخدم)
       final orderRef = await FirebaseFirestore.instance
           .collection('users')
           .doc(user.uid)
@@ -61,10 +62,21 @@ class CheckoutService {
             onTimeout: () => throw Exception('انتهت مهلة إنشاء الطلب'),
           );
 
+      // كتابة الطلب إلى Firestore (لصاحب الحظيرة)
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(farmerId)
+          .collection('farmer_orders')
+          .doc(orderRef.id) // استخدام نفس orderId لتسهيل التتبع
+          .set(orderData)
+          .timeout(
+            const Duration(seconds: 10),
+            onTimeout: () => throw Exception('انتهت مهلة إنشاء الطلب'),
+          );
+
       // إرجاع رقم الطلب
       return orderRef.id;
     } catch (e, stackTrace) {
-      // تسجيل الخطأ للتحقق
       print('Error in submitOrder: $e');
       print('StackTrace: $stackTrace');
       throw Exception('فشل إنشاء الطلب: $e');
