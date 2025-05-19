@@ -21,7 +21,6 @@ import 'package:hadaer_blady/features/product/widgets/rating_info.dart';
 import 'package:hadaer_blady/features/rateing/cubit/rating_cubit.dart';
 import 'package:hadaer_blady/features/rateing/cubit/rating_state.dart';
 
-// AddCustomOrderToCart Widget
 class AddCustomOrderToCart extends StatelessWidget {
   const AddCustomOrderToCart({
     super.key,
@@ -73,7 +72,6 @@ class CustomProductDetailScreen extends StatefulWidget {
 class _CustomProductDetailScreenState extends State<CustomProductDetailScreen> {
   final FirebaseAuthService firebaseAuthService = getIt<FirebaseAuthService>();
   final FarmerService farmerService = getIt<FarmerService>();
-
   final CustomProductService customProductService =
       getIt<CustomProductService>();
   String _currentUserId = '';
@@ -82,6 +80,9 @@ class _CustomProductDetailScreenState extends State<CustomProductDetailScreen> {
   void initState() {
     super.initState();
     _loadCurrentUserId();
+    log(
+      'Initialized CustomProductDetailScreen with product: ${widget.product.id} - ${widget.product.title}',
+    );
   }
 
   void _loadCurrentUserId() {
@@ -113,6 +114,9 @@ class _CustomProductDetailScreenState extends State<CustomProductDetailScreen> {
       return farmerData;
     } catch (e) {
       log('Error fetching farmer data: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('خطأ في تحميل بيانات المزارع: $e')),
+      );
       return {};
     }
   }
@@ -120,34 +124,31 @@ class _CustomProductDetailScreenState extends State<CustomProductDetailScreen> {
   Future<void> _handleAddToCart(BuildContext context) async {
     try {
       final cartCubit = context.read<CartCubit>();
-      const quantity = 1; // Fixed quantity
+      const quantity = 1;
       final productData = {
         'id': widget.product.id,
         'name': widget.product.title,
-        'price': widget.product.price, // 2000
-        'imageUrl': widget.product.imageUrl, // Ensure imageUrl is passed
+        'price': widget.product.price,
+        'imageUrl': widget.product.imageUrl,
         'description': widget.product.description,
         'farmerId': widget.product.farmerId,
         'displayLocation': widget.product.displayLocation,
       };
-      final totalPrice = widget.product.price * quantity; // 2000 * 1
+      final totalPrice = widget.product.price * quantity;
 
       log(
         'Adding to cart: ${widget.product.title}, Quantity: $quantity, Total Price: $totalPrice, Image URL: ${widget.product.imageUrl}',
       );
 
-      // Validate product ID
       if (productData['id'] == null) {
         _showErrorMessage(context, 'معرف المنتج غير صالح');
         return;
       }
 
-      // Validate imageUrl
       if (productData['imageUrl'] == null) {
         log('Warning: imageUrl is empty or null');
       }
 
-      // Add to cart
       await cartCubit.addToCart(
         productId: widget.product.id,
         productData: productData,
@@ -155,17 +156,13 @@ class _CustomProductDetailScreenState extends State<CustomProductDetailScreen> {
         totalPrice: totalPrice,
       );
 
-      // Check if user is a farmer
       final isUserFarmer = await isFarmer();
       if (isUserFarmer) {
-        // Navigate to HomeScreen for farmers
         _navigateToHomeScreen(context, isUserFarmer);
       } else {
-        // Show success dialog for regular users
         _showSuccessMessage(context, isUserFarmer);
       }
     } catch (error) {
-      // Show error dialog
       _showErrorMessage(context, error.toString());
     }
   }
@@ -188,7 +185,7 @@ class _CustomProductDetailScreenState extends State<CustomProductDetailScreen> {
             text: 'تمت إضافة ${widget.product.title} إلى السلة',
             buttonText: 'عرض السلة',
             onPressed: () {
-              Navigator.pop(context); // Close dialog
+              Navigator.pop(context);
               Navigator.pushAndRemoveUntil(
                 context,
                 MaterialPageRoute(
@@ -199,7 +196,6 @@ class _CustomProductDetailScreenState extends State<CustomProductDetailScreen> {
                 (route) => false,
               );
             },
-            
           ),
     );
   }
@@ -212,7 +208,7 @@ class _CustomProductDetailScreenState extends State<CustomProductDetailScreen> {
             text: 'فشلت عملية الإضافة: $errorMessage',
             buttonText: 'حاول مرة أخرى',
             onPressed: () {
-              Navigator.pop(context); // Close dialog
+              Navigator.pop(context);
             },
             isError: true,
           ),
@@ -225,7 +221,7 @@ class _CustomProductDetailScreenState extends State<CustomProductDetailScreen> {
       'Building CustomProductDetailScreen for product: ${widget.product.title}, farmerId: ${widget.product.farmerId}',
     );
     return BlocProvider(
-      create: (context) => CartCubit(), // Replace with getIt if registered
+      create: (context) => CartCubit(),
       child: Scaffold(
         backgroundColor: AppColors.kWiteColor,
         body: SafeArea(
@@ -247,7 +243,6 @@ class _CustomProductDetailScreenState extends State<CustomProductDetailScreen> {
                 final isOwnOffer = _currentUserId == widget.product.farmerId;
 
                 return Column(
-                  spacing: 12,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Container(
@@ -290,7 +285,7 @@ class _CustomProductDetailScreenState extends State<CustomProductDetailScreen> {
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            widget.product.title, // "حصري"
+                            widget.product.title,
                             style: TextStyles.bold19.copyWith(
                               color: Colors.black87,
                               height: 1.3,
@@ -298,7 +293,7 @@ class _CustomProductDetailScreenState extends State<CustomProductDetailScreen> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            widget.product.description, // "عرض جديد"
+                            widget.product.description,
                             style: TextStyles.regular16.copyWith(
                               color: Colors.black87,
                               height: 1.5,
@@ -313,7 +308,7 @@ class _CustomProductDetailScreenState extends State<CustomProductDetailScreen> {
                               ),
                               const SizedBox(width: 8),
                               Text(
-                                widget.product.displayLocation, // "طرابلس"
+                                widget.product.displayLocation,
                                 style: TextStyles.medium15,
                               ),
                             ],
@@ -340,7 +335,7 @@ class _CustomProductDetailScreenState extends State<CustomProductDetailScreen> {
                                 ],
                               ),
                               child: Text(
-                                '${widget.product.price.toStringAsFixed(2)} دينار', // "2000.00 دينار"
+                                '${widget.product.price.toStringAsFixed(2)} دينار',
                                 style: TextStyles.bold16.copyWith(
                                   color: Colors.white,
                                 ),
@@ -372,7 +367,6 @@ class _CustomProductDetailScreenState extends State<CustomProductDetailScreen> {
   }
 }
 
-// ويدجت منفصلة لعرض التقييمات
 class RatingDisplay extends StatelessWidget {
   final String userId;
 
@@ -459,7 +453,6 @@ class CustomProductImage extends StatelessWidget {
   }
 }
 
-// CustomeShowDialog with error icon support
 class CustomeShowDialog extends StatelessWidget {
   const CustomeShowDialog({
     super.key,

@@ -9,16 +9,20 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:hadaer_blady/core/services/get_it.dart';
 import 'package:hadaer_blady/core/services/on_generate_route.dart';
+import 'package:hadaer_blady/core/services/firebase_auth_service.dart';
 import 'package:hadaer_blady/core/utils/app_colors.dart';
 import 'package:hadaer_blady/features/splash/splash_screen.dart';
+import 'package:hadaer_blady/features/auth/presentation/signin/view/signin_screen.dart';
 import 'package:hadaer_blady/firebase_options.dart';
 import 'package:hadaer_blady/generated/l10n.dart';
+import 'package:app_links/app_links.dart';
 import 'core/services/custom_product_servise.dart';
 import 'core/services/shared_prefs_singleton.dart';
 import 'features/add_custom_product/presentation/custom_product_screen_details.dart';
 
-Future<void> _firebaseMessagingBackGroundHandler(RemoteMessage message) async {
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  log('Background message received: ${message.data}');
 }
 
 void main() async {
@@ -40,8 +44,8 @@ void main() async {
     provisional: true,
     sound: true,
   );
-  if (Platform.isIOS == false) {
-    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackGroundHandler);
+  if (!Platform.isIOS) {
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   }
   setupGetIt();
 
@@ -60,46 +64,164 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
+  late AppLinks _appLinks;
+  StreamSubscription<Uri>? _linkSubscription;
+  late FirebaseAuthService _authService;
+
   @override
   void initState() {
-    WidgetsBinding.instance.addObserver(this);
     super.initState();
+    _authService = getIt<FirebaseAuthService>();
+    WidgetsBinding.instance.addObserver(this);
+    setupInteractedMessage();
+    initAppLinks();
   }
 
-  Future<void> setupInteractedMessage(BuildContext context) async {
-    initialize(context);
+  Future<void> setupInteractedMessage() async {
+    await initialize();
     await FirebaseMessaging.instance.subscribeToTopic("offers");
-    RemoteMessage? initialMessage =
-        await FirebaseMessaging.instance.getInitialMessage();
-    if (initialMessage != null) {}
 
+    // Handle notification when app is opened from terminated state
+    RemoteMessage? initialMessage = await FirebaseMessaging.instance.getInitialMessage();
+    if (initialMessage != null) {
+      _handleMessage(initialMessage);
+    }
+
+    // Handle notification when app is in background and opened
+    FirebaseMessaging.onMessageOpenedApp.listen(_handleMessage);
+
+    // Handle foreground notifications
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       if (message.notification != null) {
         display(message);
       }
     });
-    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) async {
-      if (message.notification != null) {
-        final GlobalKey<NavigatorState> navigatorKey =
-            GlobalKey<NavigatorState>();
-        Map<String, dynamic> data = message.data;
-        String? productId = data['productId'];
+  }
+
+  Future<void> _handleMessage(RemoteMessage message) async {
+    log('Handling message: ${message.data}');
+    if (message.notification != null) {
+      Map<String, dynamic> data = message.data;
+      String? productId = data['productId'];
+      
+      if (productId != null && productId.isNotEmpty) {
+        // التحقق من تسجيل الدخول أولاً
+        if (!_authService.isUserLoggedIn()) {
+          log('User not logged in, redirecting to login screen');
+          _showLoginRequiredDialog();
+          return;
+        }
 
         final productService = getIt<CustomProductService>();
-        final product = await productService.getProductById(productId ?? '');
-
+        final product = await productService.getProductById(productId);
+        log('Fetched product: $product');
+        
         if (product != null) {
-          navigatorKey.currentState?.pushNamed(
+          widget.navigatorKey.currentState?.pushNamed(
             CustomProductDetailScreen.id,
             arguments: product,
           );
+        } else {
+          log('Product not found for ID: $productId');
+          _showSnackBar('المنتج غير موجود');
         }
+      } else {
+        log('No productId found in notification data: $data');
       }
+    }
+  }
+
+  void _showLoginRequiredDialog() {
+    final context = widget.navigatorKey.currentContext;
+    if (context != null) {
+      showDialog(
+        context: context,
+        builder: (BuildContext dialogContext) => AlertDialog(
+          title: const Text('تسجيل الدخول مطلوب'),
+          content: const Text('يجب تسجيل الدخول أولاً لعرض تفاصيل المنتج'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+              },
+              child: const Text('إلغاء'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+                widget.navigatorKey.currentState?.pushNamed(SigninScreen.id);
+              },
+              child: const Text('تسجيل الدخول'),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
+  void _showSnackBar(String message) {
+    final context = widget.navigatorKey.currentContext;
+    if (context != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
+    }
+  }
+
+  Future<void> initAppLinks() async {
+    _appLinks = AppLinks();
+
+    // Handle initial deep link
+    try {
+      final uri = await _appLinks.getInitialLink();
+      if (uri != null) {
+        _handleDeepLink(uri);
+      }
+    } catch (e) {
+      log('Error handling initial deep link: $e');
+    }
+
+    // Handle deep links while app is running
+    _linkSubscription = _appLinks.uriLinkStream.listen((Uri? uri) {
+      if (uri != null) {
+        _handleDeepLink(uri);
+      }
+    }, onError: (err) {
+      log('Error in uriLinkStream: $err');
     });
   }
 
-  Future<void> initialize(BuildContext context) async {
-    AndroidNotificationChannel channel = AndroidNotificationChannel(
+  void _handleDeepLink(Uri uri) async {
+    log('Handling deep link: $uri');
+    if (uri.scheme == 'hadaerblady' && uri.host == 'product') {
+      final productId = uri.queryParameters['product_id'];
+      
+      if (productId != null) {
+        // التحقق من تسجيل الدخول أولاً
+        if (!_authService.isUserLoggedIn()) {
+          log('User not logged in, redirecting to login screen for deep link');
+          _showLoginRequiredDialog();
+          return;
+        }
+
+        final productService = getIt<CustomProductService>();
+        final product = await productService.getProductById(productId);
+        
+        if (product != null) {
+          widget.navigatorKey.currentState?.pushNamed(
+            CustomProductDetailScreen.id,
+            arguments: product,
+          );
+        } else {
+          log('Product not found for deep link ID: $productId');
+          _showSnackBar('المنتج غير موجود');
+        }
+      }
+    }
+  }
+
+  Future<void> initialize() async {
+    AndroidNotificationChannel channel = const AndroidNotificationChannel(
       'offer_channel',
       'عروض مميزة',
       description: 'إشعارات للعروض الجديدة المميزة',
@@ -111,22 +233,47 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     const AndroidInitializationSettings androidInitializationSettings =
         AndroidInitializationSettings('@mipmap/ic_launcher');
 
-    var iosInitializationSettings = const DarwinInitializationSettings();
-    final InitializationSettings initializationSettings =
-        InitializationSettings(
-          android: androidInitializationSettings,
-          iOS: iosInitializationSettings,
-        );
+    const iosInitializationSettings = DarwinInitializationSettings();
+    final InitializationSettings initializationSettings = InitializationSettings(
+      android: androidInitializationSettings,
+      iOS: iosInitializationSettings,
+    );
 
     await FlutterLocalNotificationsPlugin().initialize(
       initializationSettings,
-      onDidReceiveNotificationResponse: (payload) async {},
+      onDidReceiveNotificationResponse: (response) async {
+        if (response.payload != null) {
+          final data = jsonDecode(response.payload!);
+          String? productId = data['productId'];
+          
+          if (productId != null) {
+            // التحقق من تسجيل الدخول أولاً
+            if (!_authService.isUserLoggedIn()) {
+              log('User not logged in, redirecting to login screen from local notification');
+              _showLoginRequiredDialog();
+              return;
+            }
+
+            final productService = getIt<CustomProductService>();
+            final product = await productService.getProductById(productId);
+            
+            if (product != null) {
+              widget.navigatorKey.currentState?.pushNamed(
+                CustomProductDetailScreen.id,
+                arguments: product,
+              );
+            } else {
+              log('Product not found for notification ID: $productId');
+              _showSnackBar('المنتج غير موجود');
+            }
+          }
+        }
+      },
     );
 
     await FlutterLocalNotificationsPlugin()
         .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin
-        >()
+            AndroidFlutterLocalNotificationsPlugin>()
         ?.createNotificationChannel(channel);
   }
 
@@ -142,8 +289,8 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
           importance: Importance.max,
           priority: Priority.high,
           icon: '@mipmap/ic_launcher',
-          largeIcon: DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
-          color: Color(0xFF2196F3),
+          largeIcon: const DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
+          color: const Color(0xFF2196F3),
           enableVibration: true,
           styleInformation: BigTextStyleInformation(
             message.notification?.body ?? 'تم إضافة عرض جديد',
@@ -152,7 +299,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
             htmlFormatContentTitle: true,
           ),
         ),
-        iOS: DarwinNotificationDetails(
+        iOS: const DarwinNotificationDetails(
           presentAlert: true,
           presentBadge: true,
           presentSound: true,
@@ -171,8 +318,14 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   }
 
   @override
+  void dispose() {
+    _linkSubscription?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    setupInteractedMessage(context);
     return MaterialApp(
       navigatorKey: widget.navigatorKey,
       debugShowCheckedModeBanner: false,
