@@ -43,21 +43,21 @@ class _SplashScreenState extends State<SplashScreen> {
           crossAxisAlignment: CrossAxisAlignment.center,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            // Align(
-            //   alignment: Alignment.centerRight,
-            //   child: SvgPicture.asset(
-            //     Assets.imagesLogoUpFireSplash,
-            //     height: 200,
-            //   ),
-            // ),
+            Align(
+              alignment: Alignment.centerRight,
+              child: SvgPicture.asset(
+                Assets.imagesLogoUpFireSplash,
+                height: 200,
+              ),
+            ),
             SvgPicture.asset(Assets.imagesLogo, height: 200),
-            // Align(
-            //   alignment: Alignment.centerLeft,
-            //   child: SvgPicture.asset(
-            //     Assets.imagesLogoDownFireSplash,
-            //     height: 200,
-            //   ),
-            // ),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: SvgPicture.asset(
+                Assets.imagesLogoDownFireSplash,
+                height: 200,
+              ),
+            ),
           ],
         ),
       ),

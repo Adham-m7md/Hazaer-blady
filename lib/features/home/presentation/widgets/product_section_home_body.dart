@@ -66,7 +66,7 @@ class _ProductsSectionWidgetState extends State<ProductsSectionWidget> {
             ),
           ],
         ),
-        
+
         // Products List
         StreamBuilder<QuerySnapshot>(
           stream: FirebaseFirestore.instance.collection('products').snapshots(),
@@ -128,7 +128,7 @@ class _ProductsSectionWidgetState extends State<ProductsSectionWidget> {
           return const Center(child: Text('خطأ في تصفية المنتجات'));
         }
         if (!ratingSnapshot.hasData || ratingSnapshot.data!.isEmpty) {
-          return const Center(child: Text('لا توجد منتجات متاحة'));
+          return const Center(child: Text('لا توجد منتjat متاحة'));
         }
 
         final sortedProducts = ratingSnapshot.data!;
@@ -143,29 +143,70 @@ class _ProductsSectionWidgetState extends State<ProductsSectionWidget> {
   }
 
   Widget _buildNearestProducts(List<QueryDocumentSnapshot> products) {
-    return FutureBuilder<List<Map<String, dynamic>>>(
-      future: LocationService().sortProductsByDistance(products),
-      builder: (context, distanceSnapshot) {
-        if (distanceSnapshot.connectionState == ConnectionState.waiting) {
+    return FutureBuilder<bool>(
+      future: LocationService().promptForLocationPermission(context),
+      builder: (context, permissionSnapshot) {
+        if (permissionSnapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CustomLoadingIndicator());
         }
-        if (distanceSnapshot.hasError) {
-          log('Error sorting products by distance: ${distanceSnapshot.error}');
-          return const Center(child: Text('خطأ في تصفية المنتجات'));
-        }
-        if (!distanceSnapshot.hasData || distanceSnapshot.data!.isEmpty) {
-          return const Center(child: Text('لا توجد منتجات متاحة'));
+        if (!permissionSnapshot.hasData || !permissionSnapshot.data!) {
+          // Fallback to newest filter if location permission is denied
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            setState(() {
+              selectedFilter = 'newest';
+            });
+          });
+          return _buildNewestProducts(products);
         }
 
-        final sortedProducts = distanceSnapshot.data!;
-        return _buildProductsList(
-          sortedProducts.map((item) => {
-            'product': {
-              ...item['product'] as Map<String, dynamic>,
-              'distance': (item['distance'] as double).toStringAsFixed(2),
-            },
-            'productId': item['productId'] as String,
-          }).toList(),
+        return FutureBuilder<List<Map<String, dynamic>>>(
+          future: LocationService().sortProductsByDistance(products),
+          builder: (context, distanceSnapshot) {
+            if (distanceSnapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CustomLoadingIndicator());
+            }
+            if (distanceSnapshot.hasError) {
+              log('Error sorting products by distance: ${distanceSnapshot.error}');
+              return const Center(child: Text('خطأ في تصفية المنتجات حسب الموقع'));
+            }
+            if (!distanceSnapshot.hasData || distanceSnapshot.data!.isEmpty) {
+              // Fallback to newest filter if no products or location data
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                setState(() {
+                  selectedFilter = 'newest';
+                });
+              });
+              return _buildNewestProducts(products);
+            }
+
+            final sortedProducts = distanceSnapshot.data!;
+            // Check if any products have valid distances
+            bool hasValidDistances =
+                sortedProducts.any((item) => (item['distance'] as double).isFinite);
+            if (!hasValidDistances) {
+              // Fallback to newest filter if no valid location data
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                setState(() {
+                  selectedFilter = 'newest';
+                });
+              });
+              return _buildNewestProducts(products);
+            }
+
+            return _buildProductsList(
+              sortedProducts.map((item) {
+                final product = item['product'] as Map<String, dynamic>;
+                final distance = item['distance'] as double;
+                return {
+                  'product': {
+                    ...product,
+                    'distance': distance.isFinite ? distance.toStringAsFixed(2) : 'غير معروف',
+                  },
+                  'productId': item['productId'] as String,
+                };
+              }).toList(),
+            );
+          },
         );
       },
     );

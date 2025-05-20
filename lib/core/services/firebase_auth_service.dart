@@ -3,7 +3,6 @@ import 'dart:developer';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:hadaer_blady/core/errors/exeptions.dart';
-import 'package:hadaer_blady/core/services/location_service.dart';
 import 'package:hadaer_blady/core/services/shared_prefs_singleton.dart';
 
 class FirebaseAuthService {
@@ -120,25 +119,10 @@ class FirebaseAuthService {
           'email_verified': false,
         });
 
-        // تسجيل بيانات الموقع في subcollection
-        final position = await LocationService().getUserLocation();
-        if (position != null) {
-          await firestore
-              .collection('users')
-              .doc(user.uid)
-              .collection('location')
-              .doc('current')
-              .set({
-                'latitude': position.latitude,
-                'longitude': position.longitude,
-                'timestamp': FieldValue.serverTimestamp(),
-              });
-          log(
-            'Location saved for user ${user.uid}: lat=${position.latitude}, lng=${position.longitude}',
-          );
-        } else {
-          log('No location data available for user ${user.uid}');
-        }
+        // Removed location saving logic
+        log(
+          'User created successfully without location data for ID: ${user.uid}',
+        );
 
         await _saveUserToPrefs(
           name: cleanName,
@@ -205,7 +189,6 @@ class FirebaseAuthService {
     }
   }
 
-  // Sign in with email or phone
   // Sign in with email or phone
   Future<User> signInWithEmailOrPhone({
     required String emailOrPhone,

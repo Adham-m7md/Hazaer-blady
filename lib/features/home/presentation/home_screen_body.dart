@@ -21,7 +21,6 @@ class HomeScreenBody extends StatefulWidget {
 class _HomeScreenBodyState extends State<HomeScreenBody> {
   final CustomProductService productService = CustomProductService();
 
-  // Key for RefreshIndicator
   final GlobalKey<RefreshIndicatorState> _refreshKey =
       GlobalKey<RefreshIndicatorState>();
 
@@ -40,7 +39,6 @@ class _HomeScreenBodyState extends State<HomeScreenBody> {
             // Header Section
             _buildHeaderSection(),
 
-            // Main Content with Pull to Refresh
             Expanded(
               child: RefreshIndicator(
                 key: _refreshKey,
@@ -53,12 +51,8 @@ class _HomeScreenBodyState extends State<HomeScreenBody> {
                   child: Column(
                     spacing: 8,
                     children: [
-                      const SizedBox(height: 4),
-
-                      // Offers Section
                       _buildOffersSection(),
 
-                      // Products Section
                       const ProductsSectionWidget(),
                     ],
                   ),
@@ -119,6 +113,7 @@ class _HomeScreenBodyState extends State<HomeScreenBody> {
 
   Widget _buildOffersSection() {
     return Column(
+      spacing: 12,
       children: [
         const Row(children: [Text('عروض مميزة :', style: TextStyles.bold16)]),
         FutureBuilder<List<CustomProduct>>(
@@ -153,13 +148,9 @@ class _HomeScreenBodyState extends State<HomeScreenBody> {
   // Function to handle refresh
   Future<void> _onRefresh() async {
     try {
-      // Add a small delay for better UX
       await Future.delayed(const Duration(milliseconds: 500));
 
-      // Refresh the state to trigger rebuilds
-      setState(() {
-        // This will trigger all StreamBuilders and FutureBuilders to rebuild
-      });
+      setState(() {});
 
       log('Page refreshed successfully');
     } catch (e) {

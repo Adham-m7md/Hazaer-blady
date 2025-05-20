@@ -14,7 +14,6 @@ import 'package:hadaer_blady/features/profile/widgets/profile_image_widget.dart'
 import 'package:hadaer_blady/features/profile/widgets/profile_info.dart';
 import 'package:hadaer_blady/features/profile_data/presentation/profile_data.dart';
 import 'package:hadaer_blady/features/settings/presentation/settings_screen.dart';
-import 'package:hadaer_blady/features/who_we_are/presentation/who_we_are_screen.dart';
 
 class ProfileScreenBody extends StatefulWidget {
   const ProfileScreenBody({super.key});
@@ -135,21 +134,13 @@ class _ProfileScreenBodyState extends State<ProfileScreenBody> {
                   titelText: 'الإعدادات',
                 ),
               ),
-              InkWell(
-                onTap: () {
-                  Navigator.pushNamed(context, WhoWeAreScreen.id);
-                },
-                child: const CustomeRowProfileContent(
-                  icon: Icons.info_outlined,
-                  titelText: 'من نحن',
-                ),
-              ),
+
               if (isAdmin) ...[
                 SizedBox(height: context.screenHeight * 0.02),
               ] else if (isCoopOwner) ...[
-                SizedBox(height: context.screenHeight * 0.1),
+                SizedBox(height: context.screenHeight * 0.15),
               ] else ...[
-                SizedBox(height: context.screenHeight * 0.2),
+                SizedBox(height: context.screenHeight * 0.32),
               ],
               GestureDetector(
                 onTap: () {
@@ -163,7 +154,7 @@ class _ProfileScreenBodyState extends State<ProfileScreenBody> {
                 child: Container(
                   height: 30,
                   width: double.infinity,
-                  color: Color(0xffEBF9F1),
+                  color:const Color(0xffEBF9F1),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [

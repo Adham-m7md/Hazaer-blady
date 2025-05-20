@@ -113,16 +113,41 @@ class Prefs {
     profileImageNotifier.value = ''; // Update the notifier
   }
 
-  static String getJobTitle() {
-    return _instance.getString('job_title') ?? '';
-  }
-
+  // Save job title to SharedPreferences
   static Future<void> setJobTitle(String jobTitle) async {
     await _instance.setString('job_title', jobTitle);
   }
 
-  static Future<void> clearJopTitle() async {
+  // Retrieve job title from SharedPreferences
+  static String getJobTitle() {
+    return _instance.getString('job_title') ?? '';
+  }
+
+  // Clear job title from SharedPreferences
+  static Future<void> clearJobTitle() async {
     await _instance.remove('job_title');
+  }
+
+  // Save user location (latitude and longitude) to SharedPreferences
+  static Future<void> setUserLocation(double latitude, double longitude) async {
+    await _instance.setDouble('user_latitude', latitude);
+    await _instance.setDouble('user_longitude', longitude);
+  }
+
+  // Retrieve user latitude from SharedPreferences
+  static double? getUserLatitude() {
+    return _instance.getDouble('user_latitude');
+  }
+
+  // Retrieve user longitude from SharedPreferences
+  static double? getUserLongitude() {
+    return _instance.getDouble('user_longitude');
+  }
+
+  // Clear user location from SharedPreferences
+  static Future<void> clearUserLocation() async {
+    await _instance.remove('user_latitude');
+    await _instance.remove('user_longitude');
   }
 
   // Clear all user data from SharedPreferences
@@ -133,6 +158,7 @@ class Prefs {
     await clearUserAddress();
     await clearUserCity();
     await clearProfileImageUrl();
-    await clearJopTitle();
+    await clearJobTitle();
+    await clearUserLocation();
   }
 }
