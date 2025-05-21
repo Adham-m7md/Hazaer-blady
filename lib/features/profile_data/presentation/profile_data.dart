@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -5,6 +6,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hadaer_blady/core/constants.dart';
 import 'package:hadaer_blady/core/functions/build_app_bar_with_arrow_back_button.dart';
 import 'package:hadaer_blady/core/functions/show_snack_bar.dart';
+import 'package:hadaer_blady/core/services/get_it.dart';
+import 'package:hadaer_blady/core/services/location_service.dart';
 import 'package:hadaer_blady/core/services/shared_prefs_singleton.dart';
 import 'package:hadaer_blady/core/utils/app_colors.dart';
 import 'package:hadaer_blady/core/widgets/loading_indicator.dart';
@@ -28,6 +31,7 @@ class _ProfileDataState extends State<ProfileData> {
   final _addressController = TextEditingController();
   File? _selectedImage;
   late ProfileCubit _profileCubit;
+  late LocationService _locationService;
   Map<String, dynamic> _userData = {};
   bool _isLoading = true;
 
@@ -35,6 +39,7 @@ class _ProfileDataState extends State<ProfileData> {
   void initState() {
     super.initState();
     _profileCubit = ProfileCubit();
+    _locationService = getIt<LocationService>();
     _loadInitialData();
   }
 
@@ -87,14 +92,60 @@ class _ProfileDataState extends State<ProfileData> {
     return hasLocalData;
   }
 
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _emailController.dispose();
-    _phoneController.dispose();
-    _cityController.dispose();
-    _addressController.dispose();
-    super.dispose();
+  Future<void> _updateLocation() async {
+    // Show confirmation dialog before proceeding
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('تأكيد تحديث الموقع'),
+        content: const Text(
+          'هل تريد تحديث موقعك الحالي؟ سيتم استخدام موقعك لتحسين تجربة التطبيق، مثل فرز المنتجات حسب الأقرب إليك.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('إلغاء'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('تأكيد'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    try {
+      // Prompt for location permissions
+      final permissionGranted = await _locationService.promptForLocationPermission(context);
+      if (!permissionGranted) {
+        showSnackBarMethode(context, 'لم يتم منح إذن الموقع');
+        return;
+      }
+
+      // Get and save location
+      final position = await _locationService.getUserLocation(forceRefresh: true);
+      if (position == null) {
+        showSnackBarMethode(context, 'تعذر الحصول على الموقع');
+        return;
+      }
+
+      // Location is saved in Firestore and SharedPreferences by getUserLocation
+      showSnackBarMethode(context, 'تم تحديث الموقع بنجاح');
+      log('Location updated: ${position.latitude}, ${position.longitude}');
+
+      // Refresh userData to reflect any location-based updates
+      await _profileCubit.fetchUserData();
+      setState(() {
+        _userData = (_profileCubit.state is ProfileLoaded)
+            ? (_profileCubit.state as ProfileLoaded).userData
+            : _userData;
+      });
+    } catch (e) {
+      log('Error updating location: $e');
+      showSnackBarMethode(context, 'فشل تحديث الموقع: $e');
+    }
   }
 
   Future<void> _pickImage() async {
@@ -106,6 +157,16 @@ class _ProfileDataState extends State<ProfileData> {
         _selectedImage = File(pickedFile.path);
       });
     }
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _phoneController.dispose();
+    _cityController.dispose();
+    _addressController.dispose();
+    super.dispose();
   }
 
   @override
@@ -151,6 +212,7 @@ class _ProfileDataState extends State<ProfileData> {
                     selectedImage: _selectedImage,
                     onImagePick: _pickImage,
                     onSave: () => _onSaved(context),
+                    onUpdateLocation: _updateLocation,
                   ),
                 ),
               );
@@ -163,11 +225,11 @@ class _ProfileDataState extends State<ProfileData> {
 
   void _onSaved(BuildContext context) {
     context.read<ProfileCubit>().updateUserData(
-      name: _nameController.text,
-      phone: _phoneController.text,
-      city: _cityController.text,
-      address: _addressController.text,
-      profileImage: _selectedImage,
-    );
+          name: _nameController.text,
+          phone: _phoneController.text,
+          city: _cityController.text,
+          address: _addressController.text,
+          profileImage: _selectedImage,
+        );
   }
 }

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:hadaer_blady/core/services/shared_prefs_singleton.dart';
 import 'package:hadaer_blady/core/utils/app_colors.dart';
 import 'package:hadaer_blady/core/utils/app_directions.dart';
+import 'package:hadaer_blady/core/utils/app_text_styles.dart';
 import 'package:hadaer_blady/core/widgets/custom_button.dart';
 import 'package:hadaer_blady/core/widgets/custom_text_form_feild.dart';
 import 'package:hadaer_blady/core/widgets/custom_tittel.dart';
@@ -18,6 +19,7 @@ class ProfileDataBody extends StatelessWidget {
   final VoidCallback onSave;
   final File? selectedImage;
   final VoidCallback onImagePick;
+  final VoidCallback onUpdateLocation;
 
   const ProfileDataBody({
     super.key,
@@ -30,6 +32,7 @@ class ProfileDataBody extends StatelessWidget {
     required this.onSave,
     this.selectedImage,
     required this.onImagePick,
+    required this.onUpdateLocation,
   });
 
   @override
@@ -142,7 +145,52 @@ class ProfileDataBody extends StatelessWidget {
               }
             },
           ),
-          Container(height: context.screenHeight * 0.02),
+          const CustomTittel(text: 'الموقع:'),
+          InkWell(
+            onTap: onUpdateLocation,
+            child: Container(
+              height: 48,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: AppColors.kFillGrayColor,
+                border: Border.all(width: 1, color: AppColors.klightGrayColor),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Row(
+                  children: [
+                    Text(
+                      'قم بتحديد الموقع',
+                      style: TextStyles.bold13.copyWith(
+                        color: AppColors.kGrayColor,
+                      ),
+                    ),
+                    const Spacer(),
+                    Icon(
+                      Icons.location_on_outlined,
+                      color: AppColors.kGrayColor,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          // Display current location if available
+          if (Prefs.getUserLatitude() != null &&
+              Prefs.getUserLongitude() != null &&
+              Prefs.getUserLatitude() != 0 &&
+              Prefs.getUserLongitude() != 0)
+            Padding(
+              padding: const EdgeInsets.only(top: 8, bottom: 8),
+              child: Text(
+                'الموقع الحالي: ${Prefs.getUserLatitude()?.toStringAsFixed(4)}, ${Prefs.getUserLongitude()?.toStringAsFixed(4)}',
+                style: TextStyles.regular13.copyWith(
+                  color: AppColors.kGrayColor,
+                ),
+              ),
+            ),
+          const SizedBox(height: 8),
           CustomButton(onPressed: onSave, text: 'حفظ التغييرات'),
         ],
       ),
@@ -163,54 +211,50 @@ class ProfileDataBody extends StatelessWidget {
               shape: BoxShape.circle,
             ),
             child: GestureDetector(
-              onTap:
-                  hasImage
-                      ? () {
-                        showDialog(
-                          context: context,
-                          builder:
-                              (context) => _buildImageDialog(
-                                context,
-                                selectedImage,
-                                imageUrl,
-                              ),
-                        );
-                      }
-                      : onImagePick,
-              child:
-                  selectedImage != null
-                      ? Image.file(
-                        selectedImage!,
-                        fit: BoxFit.cover,
-                        errorBuilder:
-                            (context, error, stackTrace) => const Center(
-                              child: Icon(
-                                Icons.person,
-                                color: AppColors.kGrayColor,
-                                size: 60,
-                              ),
-                            ),
-                      )
-                      : imageUrl.isNotEmpty
-                      ? Image.network(
-                        imageUrl,
-                        fit: BoxFit.cover,
-                        errorBuilder:
-                            (context, error, stackTrace) => const Center(
-                              child: Icon(
-                                Icons.person,
-                                color: AppColors.kGrayColor,
-                                size: 60,
-                              ),
-                            ),
-                      )
-                      : const Center(
+              onTap: hasImage
+                  ? () {
+                      showDialog(
+                        context: context,
+                        builder: (context) => _buildImageDialog(
+                          context,
+                          selectedImage,
+                          imageUrl,
+                        ),
+                      );
+                    }
+                  : onImagePick,
+              child: selectedImage != null
+                  ? Image.file(
+                      selectedImage!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => const Center(
                         child: Icon(
                           Icons.person,
                           color: AppColors.kGrayColor,
                           size: 60,
                         ),
                       ),
+                    )
+                  : imageUrl.isNotEmpty
+                      ? Image.network(
+                          imageUrl,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) =>
+                              const Center(
+                            child: Icon(
+                              Icons.person,
+                              color: AppColors.kGrayColor,
+                              size: 60,
+                            ),
+                          ),
+                        )
+                      : const Center(
+                          child: Icon(
+                            Icons.person,
+                            color: AppColors.kGrayColor,
+                            size: 60,
+                          ),
+                        ),
             ),
           ),
         ),
@@ -257,34 +301,33 @@ class ProfileDataBody extends StatelessWidget {
           children: [
             selectedImage != null
                 ? Image.file(
-                  selectedImage,
-                  fit: BoxFit.contain,
-                  errorBuilder:
-                      (context, error, stackTrace) => const Center(
-                        child: Text(
-                          'فشل تحميل الصورة',
-                          style: TextStyle(color: AppColors.kGrayColor),
-                        ),
+                    selectedImage,
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) => const Center(
+                      child: Text(
+                        'فشل تحميل الصورة',
+                        style: TextStyle(color: AppColors.kGrayColor),
                       ),
-                )
+                    ),
+                  )
                 : imageUrl.isNotEmpty
-                ? Image.network(
-                  imageUrl,
-                  fit: BoxFit.contain,
-                  errorBuilder:
-                      (context, error, stackTrace) => const Center(
+                    ? Image.network(
+                        imageUrl,
+                        fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) =>
+                            const Center(
+                          child: Text(
+                            'فشل تحميل الصورة',
+                            style: TextStyle(color: AppColors.kGrayColor),
+                          ),
+                        ),
+                      )
+                    : const Center(
                         child: Text(
-                          'فشل تحميل الصورة',
+                          'لا توجد صورة',
                           style: TextStyle(color: AppColors.kGrayColor),
                         ),
                       ),
-                )
-                : const Center(
-                  child: Text(
-                    'لا توجد صورة',
-                    style: TextStyle(color: AppColors.kGrayColor),
-                  ),
-                ),
             Positioned(
               top: 0,
               right: 0,

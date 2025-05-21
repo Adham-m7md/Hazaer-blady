@@ -1,6 +1,7 @@
 import 'dart:developer';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:hadaer_blady/core/services/shared_prefs_singleton.dart';
@@ -10,15 +11,23 @@ class LocationService {
   DateTime? _cacheTimestamp;
   static const Duration _cacheDuration = Duration(minutes: 5);
 
+  // Validate latitude and longitude values
+  bool _isValidCoordinate(double? lat, double? lng) {
+    if (lat == null || lng == null) return false;
+    return lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
+  }
+
   // Get the user's current location, using stored location if available
   Future<Position?> getUserLocation({bool forceRefresh = false}) async {
     // Check SharedPreferences for stored location
     final storedLat = Prefs.getUserLatitude();
     final storedLng = Prefs.getUserLongitude();
     if (!forceRefresh && storedLat != null && storedLng != null) {
-      log(
-        'Using stored location from SharedPreferences: $storedLat, $storedLng',
-      );
+      if (!_isValidCoordinate(storedLat, storedLng)) {
+        log('Invalid stored coordinates: lat=$storedLat, lng=$storedLng');
+        return null;
+      }
+      log('Using stored location from SharedPreferences: $storedLat, $storedLng');
       return Position(
         latitude: storedLat,
         longitude: storedLng,
@@ -39,9 +48,7 @@ class LocationService {
         _cacheTimestamp != null &&
         DateTime.now().difference(_cacheTimestamp!).inSeconds <
             _cacheDuration.inSeconds) {
-      log(
-        'Using cached user location: ${_cachedUserLocation!.latitude}, ${_cachedUserLocation!.longitude}',
-      );
+      log('Using cached user location: ${_cachedUserLocation!.latitude}, ${_cachedUserLocation!.longitude}');
       return _cachedUserLocation;
     }
 
@@ -71,13 +78,19 @@ class LocationService {
       final position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
       );
+
+      if (!_isValidCoordinate(position.latitude, position.longitude)) {
+        log('Invalid position coordinates: lat=${position.latitude}, lng=${position.longitude}');
+        return null;
+      }
+
       _cachedUserLocation = position;
       _cacheTimestamp = DateTime.now();
       // Save to SharedPreferences
       await Prefs.setUserLocation(position.latitude, position.longitude);
-      log(
-        'User location saved to SharedPreferences: ${position.latitude}, ${position.longitude}',
-      );
+      // Save to Firestore
+      await saveUserLocationToFirestore(position);
+      log('User location saved to SharedPreferences: ${position.latitude}, ${position.longitude}');
       log('User location cached: ${position.latitude}, ${position.longitude}');
       return position;
     } catch (e) {
@@ -93,26 +106,25 @@ class LocationService {
       if (context.mounted) {
         await showDialog(
           context: context,
-          builder:
-              (context) => AlertDialog(
-                title: const Text('خدمات الموقع غير مفعلة'),
-                content: const Text(
-                  'يرجى تفعيل خدمات الموقع لاستخدام ميزة الفرز حسب الأقرب.',
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('إلغاء'),
-                  ),
-                  TextButton(
-                    onPressed: () async {
-                      await Geolocator.openLocationSettings();
-                      Navigator.pop(context);
-                    },
-                    child: const Text('فتح الإعدادات'),
-                  ),
-                ],
+          builder: (context) => AlertDialog(
+            title: const Text('تفعيل خدمات الموقع'),
+            content: const Text(
+              'خدمات الموقع غير مفعلة. يرجى تفعيلها لتحديد موقعك والاستفادة من ميزات التطبيق.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('إلغاء'),
               ),
+              TextButton(
+                onPressed: () async {
+                  await Geolocator.openLocationSettings();
+                  Navigator.pop(context);
+                },
+                child: const Text('فتح الإعدادات'),
+              ),
+            ],
+          ),
         );
       }
       return false;
@@ -123,22 +135,37 @@ class LocationService {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
         if (context.mounted) {
+          bool retry = false;
           await showDialog(
             context: context,
-            builder:
-                (context) => AlertDialog(
-                  title: const Text('إذن الموقع مرفوض'),
-                  content: const Text(
-                    'يرجى السماح بالوصول إلى الموقع لاستخدام ميزة الفرز حسب الأقرب.',
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text('إلغاء'),
-                    ),
-                  ],
+            builder: (context) => AlertDialog(
+              title: const Text('طلب إذن الموقع'),
+              content: const Text(
+                'هذا التطبيق يحتاج إلى إذن الموقع لتحديد موقعك. يرجى السماح بالوصول للمتابعة.',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('إلغاء'),
                 ),
+                TextButton(
+                  onPressed: () {
+                    retry = true;
+                    Navigator.pop(context);
+                  },
+                  child: const Text('إعادة المحاولة'),
+                ),
+              ],
+            ),
           );
+          if (retry && context.mounted) {
+            permission = await Geolocator.requestPermission();
+            if (permission == LocationPermission.denied) {
+              return false;
+            }
+          } else {
+            return false;
+          }
         }
         return false;
       }
@@ -148,26 +175,25 @@ class LocationService {
       if (context.mounted) {
         await showDialog(
           context: context,
-          builder:
-              (context) => AlertDialog(
-                title: const Text('إذن الموقع مرفوض نهائيًا'),
-                content: const Text(
-                  'يرجى السماح بالوصول إلى الموقع من إعدادات التطبيق لاستخدام ميزة الفرز حسب الأقرب.',
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('إلغاء'),
-                  ),
-                  TextButton(
-                    onPressed: () async {
-                      await Geolocator.openAppSettings();
-                      Navigator.pop(context);
-                    },
-                    child: const Text('فتح الإعدادات'),
-                  ),
-                ],
+          builder: (context) => AlertDialog(
+            title: const Text('إذن الموقع مرفوض نهائيًا'),
+            content: const Text(
+              'لقد رفضت إذن الموقع نهائيًا. يرجى السماح بالوصول من إعدادات التطبيق لتحديد موقعك.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('إلغاء'),
               ),
+              TextButton(
+                onPressed: () async {
+                  await Geolocator.openAppSettings();
+                  Navigator.pop(context);
+                },
+                child: const Text('فتح الإعدادات'),
+              ),
+            ],
+          ),
         );
       }
       return false;
@@ -199,49 +225,41 @@ class LocationService {
       return productList;
     }
 
-    log(
-      'User location obtained: ${userLocation.latitude}, ${userLocation.longitude}',
-    );
+    log('User location obtained: ${userLocation.latitude}, ${userLocation.longitude}');
 
     // Collect unique farmer IDs
-    final farmerIds =
-        products
-            .map(
-              (doc) =>
-                  (doc.data() as Map<String, dynamic>)['farmer_id'] as String?,
-            )
-            .where((id) => id != null && id.isNotEmpty)
-            .toSet()
-            .toList();
+    final farmerIds = products
+        .map((doc) => (doc.data() as Map<String, dynamic>)['farmer_id'] as String?)
+        .where((id) => id != null && id.isNotEmpty)
+        .toSet()
+        .toList();
 
     // Batch fetch farmer locations
     final locationDocs = await Future.wait(
       farmerIds.map((farmerId) async {
         try {
-          final locationDoc =
-              await FirebaseFirestore.instance
-                  .collection('users')
-                  .doc(farmerId)
-                  .collection('location')
-                  .doc('current')
-                  .get();
+          final locationDoc = await FirebaseFirestore.instance
+              .collection('users')
+              .doc(farmerId)
+              .collection('location')
+              .doc('current')
+              .get();
           if (locationDoc.exists) {
-            return {'farmerId': farmerId, 'location': locationDoc.data()};
+            final data = locationDoc.data();
+            log('Location data for farmer $farmerId: $data');
+            return {'farmerId': farmerId, 'location': data};
           }
-          final farmerDoc =
-              await FirebaseFirestore.instance
-                  .collection('users')
-                  .doc(farmerId)
-                  .get();
-          return {
-            'farmerId': farmerId,
-            'location':
-                farmerDoc.exists &&
-                        farmerDoc.data()!.containsKey('latitude') &&
-                        farmerDoc.data()!.containsKey('longitude')
-                    ? farmerDoc.data() as Map<String, dynamic>
-                    : null,
-          };
+          final farmerDoc = await FirebaseFirestore.instance
+              .collection('users')
+              .doc(farmerId)
+              .get();
+          final data = farmerDoc.exists &&
+                  farmerDoc.data()!.containsKey('latitude') &&
+                  farmerDoc.data()!.containsKey('longitude')
+              ? farmerDoc.data() as Map<String, dynamic>
+              : null;
+          log('Farmer doc data for $farmerId: $data');
+          return {'farmerId': farmerId, 'location': data};
         } catch (e) {
           log('Error fetching location for farmer $farmerId: $e');
           return {'farmerId': farmerId, 'location': null};
@@ -252,8 +270,7 @@ class LocationService {
     // Create a map for quick lookup of farmer locations
     final farmerLocations = <String, Map<String, dynamic>?>{
       for (var result in locationDocs)
-        result['farmerId'] as String:
-            result['location'] as Map<String, dynamic>?,
+        result['farmerId'] as String: result['location'] as Map<String, dynamic>?,
     };
 
     // Process products
@@ -270,9 +287,10 @@ class LocationService {
         final farmerLat = locationData['latitude'] as double?;
         final farmerLng = locationData['longitude'] as double?;
 
-        if (farmerLat != null && farmerLng != null) {
-          distance =
-              Geolocator.distanceBetween(
+        if (farmerLat != null &&
+            farmerLng != null &&
+            _isValidCoordinate(farmerLat, farmerLng)) {
+          distance = Geolocator.distanceBetween(
                 userLocation.latitude,
                 userLocation.longitude,
                 farmerLat,
@@ -280,10 +298,10 @@ class LocationService {
               ) /
               1000; // Convert to kilometers
           farmersWithLocation++;
-          log('Distance for farmer $farmerId: $distance km');
+          log('Distance for farmer $farmerId (product $productId): $distance km');
         } else {
           farmersWithoutLocation++;
-          log('No valid location data for farmer $farmerId');
+          log('No valid location data for farmer $farmerId (product $productId)');
         }
       } else {
         farmersWithoutLocation++;
@@ -297,17 +315,13 @@ class LocationService {
       });
     }
 
-    log(
-      'Location summary: $farmersWithLocation farmers with location, $farmersWithoutLocation without location',
-    );
+    log('Location summary: $farmersWithLocation farmers with location, $farmersWithoutLocation without location');
 
     // Sort products by distance (closest first)
     productList.sort((a, b) => a['distance'].compareTo(b['distance']));
 
     if (farmersWithLocation == 0 && farmersWithoutLocation > 0) {
-      log(
-        'Warning: No farmers have location data. Distance-based sorting not possible.',
-      );
+      log('Warning: No farmers have valid location data. Distance-based sorting not possible.');
     }
 
     return productList;
@@ -316,10 +330,21 @@ class LocationService {
   // Sort farmers by distance
   Future<List<Map<String, dynamic>>> sortFarmersByDistance(
     List<Map<String, dynamic>> farmers,
+    BuildContext context, // Added context for permission prompt
   ) async {
     final List<Map<String, dynamic>> farmerList = [];
     int farmersWithLocation = 0;
     int farmersWithoutLocation = 0;
+
+    // Try to get user location with permission prompt
+    bool locationPermissionGranted = await promptForLocationPermission(context);
+    if (!locationPermissionGranted) {
+      log('Location permission not granted, returning farmers without sorting');
+      for (var farmer in farmers) {
+        farmerList.add({...farmer, 'distance': double.infinity});
+      }
+      return farmerList;
+    }
 
     // Get user location
     Position? userLocation = await getUserLocation();
@@ -331,46 +356,41 @@ class LocationService {
       return farmerList;
     }
 
-    log(
-      'User location obtained: ${userLocation.latitude}, ${userLocation.longitude}',
-    );
+    log('User location obtained: ${userLocation.latitude}, ${userLocation.longitude}');
 
     // Collect unique farmer IDs
-    final farmerIds =
-        farmers
-            .map((farmer) => farmer['uid'] as String?)
-            .where((id) => id != null && id.isNotEmpty)
-            .toSet()
-            .toList();
+    final farmerIds = farmers
+        .map((farmer) => farmer['uid'] as String?)
+        .where((id) => id != null && id.isNotEmpty)
+        .toSet()
+        .toList();
 
     // Batch fetch farmer locations
     final locationDocs = await Future.wait(
       farmerIds.map((farmerId) async {
         try {
-          final locationDoc =
-              await FirebaseFirestore.instance
-                  .collection('users')
-                  .doc(farmerId)
-                  .collection('location')
-                  .doc('current')
-                  .get();
+          final locationDoc = await FirebaseFirestore.instance
+              .collection('users')
+              .doc(farmerId)
+              .collection('location')
+              .doc('current')
+              .get();
           if (locationDoc.exists) {
-            return {'farmerId': farmerId, 'location': locationDoc.data()};
+            final data = locationDoc.data();
+            log('Location data for farmer $farmerId: $data');
+            return {'farmerId': farmerId, 'location': data};
           }
-          final farmerDoc =
-              await FirebaseFirestore.instance
-                  .collection('users')
-                  .doc(farmerId)
-                  .get();
-          return {
-            'farmerId': farmerId,
-            'location':
-                farmerDoc.exists &&
-                        farmerDoc.data()!.containsKey('latitude') &&
-                        farmerDoc.data()!.containsKey('longitude')
-                    ? farmerDoc.data() as Map<String, dynamic>
-                    : null,
-          };
+          final farmerDoc = await FirebaseFirestore.instance
+              .collection('users')
+              .doc(farmerId)
+              .get();
+          final data = farmerDoc.exists &&
+                  farmerDoc.data()!.containsKey('latitude') &&
+                  farmerDoc.data()!.containsKey('longitude')
+              ? farmerDoc.data() as Map<String, dynamic>
+              : null;
+          log('Farmer doc data for $farmerId: $data');
+          return {'farmerId': farmerId, 'location': data};
         } catch (e) {
           log('Error fetching location for farmer $farmerId: $e');
           return {'farmerId': farmerId, 'location': null};
@@ -381,8 +401,7 @@ class LocationService {
     // Create a map for quick lookup
     final farmerLocations = <String, Map<String, dynamic>?>{
       for (var result in locationDocs)
-        result['farmerId'] as String:
-            result['location'] as Map<String, dynamic>?,
+        result['farmerId'] as String: result['location'] as Map<String, dynamic>?,
     };
 
     // Process farmers
@@ -397,9 +416,10 @@ class LocationService {
         final farmerLat = locationData['latitude'] as double?;
         final farmerLng = locationData['longitude'] as double?;
 
-        if (farmerLat != null && farmerLng != null) {
-          distance =
-              Geolocator.distanceBetween(
+        if (farmerLat != null &&
+            farmerLng != null &&
+            _isValidCoordinate(farmerLat, farmerLng)) {
+          distance = Geolocator.distanceBetween(
                 userLocation.latitude,
                 userLocation.longitude,
                 farmerLat,
@@ -420,19 +440,47 @@ class LocationService {
       farmerList.add({...farmer, 'distance': distance});
     }
 
-    log(
-      'Location summary: $farmersWithLocation farmers with location, $farmersWithoutLocation without location',
-    );
+    log('Location summary: $farmersWithLocation farmers with location, $farmersWithoutLocation without location');
 
     // Sort farmers by distance (closest first)
     farmerList.sort((a, b) => a['distance'].compareTo(b['distance']));
 
     if (farmersWithLocation == 0 && farmersWithoutLocation > 0) {
-      log(
-        'Warning: No farmers have location data. Distance-based sorting not possible.',
-      );
+      log('Warning: No farmers have valid location data. Distance-based sorting not possible.');
     }
 
     return farmerList;
+  }
+
+  // Save user location to Firestore
+  Future<void> saveUserLocationToFirestore(Position position) async {
+    try {
+      final userId = FirebaseAuth.instance.currentUser?.uid;
+      if (userId == null) {
+        log('No authenticated user to save location');
+        return;
+      }
+
+      if (!_isValidCoordinate(position.latitude, position.longitude)) {
+        log('Invalid coordinates for Firestore: lat=${position.latitude}, lng=${position.longitude}');
+        throw Exception('Invalid location coordinates');
+      }
+
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('location')
+          .doc('current')
+          .set({
+        'latitude': position.latitude,
+        'longitude': position.longitude,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+
+      log('User location saved to Firestore: ${position.latitude}, ${position.longitude}');
+    } catch (e) {
+      log('Error saving user location to Firestore: $e');
+      throw Exception('Failed to save user location: $e');
+    }
   }
 }

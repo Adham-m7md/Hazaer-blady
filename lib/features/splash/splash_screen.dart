@@ -47,7 +47,7 @@ class _SplashScreenState extends State<SplashScreen> {
               alignment: Alignment.centerRight,
               child: SvgPicture.asset(
                 Assets.imagesLogoUpFireSplash,
-                height: 200,
+                height: 140,
               ),
             ),
             SvgPicture.asset(Assets.imagesLogo, height: 200),
@@ -55,7 +55,7 @@ class _SplashScreenState extends State<SplashScreen> {
               alignment: Alignment.centerLeft,
               child: SvgPicture.asset(
                 Assets.imagesLogoDownFireSplash,
-                height: 200,
+                height: 140,
               ),
             ),
           ],
