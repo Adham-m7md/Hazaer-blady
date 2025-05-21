@@ -37,12 +37,21 @@ class CartService {
       if (existingItem.exists) {
         final existingQuantity = existingItem.data()?['quantity'] ?? 0;
         final newQuantity = existingQuantity + quantity;
-        final newTotalPrice =
-            (productData['price_per_kg'] ?? 0.0) *
-            ((productData['min_weight'] ?? 0.0) +
-                (productData['max_weight'] ?? 0.0)) /
-            2 *
-            newQuantity;
+
+        // التحقق مما إذا كان المنتج عرضًا مميزًا أو منتجًا عاديًا
+        double newTotalPrice;
+        if (productData.containsKey('price')) {
+          // للعرض المميز: استخدام حقل price مباشرة
+          newTotalPrice = (productData['price'] ?? 0.0) * newQuantity;
+        } else {
+          // للمنتج العادي: استخدام price_per_kg و min/max_weight
+          newTotalPrice =
+              (productData['price_per_kg'] ?? 0.0) *
+              ((productData['min_weight'] ?? 0.0) +
+                  (productData['max_weight'] ?? 0.0)) /
+              2 *
+              newQuantity;
+        }
 
         await cartRef.update({
           'quantity': newQuantity,
