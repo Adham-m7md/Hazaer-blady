@@ -5,6 +5,7 @@ import 'package:hadaer_blady/core/constants.dart';
 import 'package:hadaer_blady/core/services/firebase_auth_service.dart';
 import 'package:hadaer_blady/core/services/shared_prefs_singleton.dart';
 import 'package:hadaer_blady/core/utils/app_colors.dart';
+import 'package:hadaer_blady/core/utils/app_directions.dart';
 import 'package:hadaer_blady/core/utils/svg_images.dart';
 import 'package:hadaer_blady/features/auth/presentation/signin/view/signin_screen.dart';
 import 'package:hadaer_blady/features/home/presentation/home_screen.dart';
@@ -38,28 +39,29 @@ class _SplashScreenState extends State<SplashScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.lightPrimaryColor,
-      body: Center(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Align(
-              alignment: Alignment.centerRight,
-              child: SvgPicture.asset(
-                Assets.imagesLogoUpFireSplash,
-                height: 140,
-              ),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Align(
+            alignment: Alignment.centerRight,
+            child: SvgPicture.asset(
+              Assets.imagesLogoUpFireSplash,
+              height: context.screenHeight * 0.125,
             ),
-            SvgPicture.asset(Assets.imagesLogo, height: 200),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: SvgPicture.asset(
-                Assets.imagesLogoDownFireSplash,
-                height: 140,
-              ),
+          ),
+          SvgPicture.asset(
+            Assets.imagesLogo,
+            height: context.screenHeight * 0.25,
+          ),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: SvgPicture.asset(
+              Assets.imagesLogoDownFireSplash,
+              height: context.screenHeight * 0.125,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
