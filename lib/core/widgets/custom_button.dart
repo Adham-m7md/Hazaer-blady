@@ -11,7 +11,7 @@ class CustomButton extends StatelessWidget {
     this.color = AppColors.kprimaryColor,
   });
 
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed; // تغيير إلى VoidCallback? عشان يقبل null
   final String text;
   final Color color;
 
@@ -30,6 +30,45 @@ class CustomButton extends StatelessWidget {
         ),
         child: Text(
           text,
+          style: TextStyles.bold16.copyWith(color: AppColors.kWiteColor),
+        ),
+      ),
+    );
+  }
+}
+
+class CustomCartButton extends StatelessWidget {
+  const CustomCartButton({
+    super.key,
+    required this.onPressed,
+    required this.text,
+    this.itemCount = 0,
+    this.enabled = true,
+  });
+
+  final VoidCallback? onPressed;
+  final String text;
+  final int itemCount; // عدد المنتجات المختارة (اختياري للسلة)
+  final bool enabled; // تحديد إذا كان الزر مفعل أم لا
+
+  @override
+  Widget build(BuildContext context) {
+    final buttonText = itemCount > 0 ? '$text ($itemCount)' : text;
+
+    return SizedBox(
+      height: context.screenHeight * 0.06,
+      width: double.infinity,
+      child: TextButton(
+        onPressed: enabled ? onPressed : null,
+        style: TextButton.styleFrom(
+          backgroundColor:
+              enabled ? AppColors.kprimaryColor : AppColors.kGrayColor,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(16)),
+          ),
+        ),
+        child: Text(
+          buttonText,
           style: TextStyles.bold16.copyWith(color: AppColors.kWiteColor),
         ),
       ),

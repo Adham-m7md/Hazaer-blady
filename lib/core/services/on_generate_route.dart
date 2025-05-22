@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hadaer_blady/core/services/firebase_auth_service.dart';
@@ -28,15 +30,14 @@ import 'package:hadaer_blady/features/rateing/view/rating_screen.dart';
 import 'package:hadaer_blady/features/settings/presentation/settings_screen.dart';
 import 'package:hadaer_blady/features/splash/splash_screen.dart';
 import 'package:hadaer_blady/features/who_we_are/presentation/who_we_are_screen.dart';
-import 'dart:developer';
 
 // Widget لعرض رسالة تسجيل الدخول المطلوب
 class LoginRequiredScreen extends StatelessWidget {
   final String message;
-  
+
   const LoginRequiredScreen({
-    super.key, 
-    this.message = 'يجب تسجيل الدخول أولاً للوصول لهذه الصفحة'
+    super.key,
+    this.message = 'يجب تسجيل الدخول أولاً للوصول لهذه الصفحة',
   });
 
   @override
@@ -52,11 +53,7 @@ class LoginRequiredScreen extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Icons.lock_outline,
-                size: 80,
-                color: Colors.red.shade300,
-              ),
+              Icon(Icons.lock_outline, size: 80, color: Colors.red.shade300),
               const SizedBox(height: 24),
               Text(
                 message,
@@ -72,16 +69,17 @@ class LoginRequiredScreen extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   ElevatedButton(
-                    onPressed: () => Navigator.pushReplacementNamed(
-                      context, 
-                      SigninScreen.id
-                    ),
+                    onPressed:
+                        () => Navigator.pushReplacementNamed(
+                          context,
+                          SigninScreen.id,
+                        ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blue,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 24, 
-                        vertical: 12
+                        horizontal: 24,
+                        vertical: 12,
                       ),
                     ),
                     child: const Text('تسجيل الدخول'),
@@ -91,8 +89,8 @@ class LoginRequiredScreen extends StatelessWidget {
                     style: OutlinedButton.styleFrom(
                       foregroundColor: Colors.grey.shade700,
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 24, 
-                        vertical: 12
+                        horizontal: 24,
+                        vertical: 12,
                       ),
                     ),
                     child: const Text('رجوع'),
@@ -108,8 +106,10 @@ class LoginRequiredScreen extends StatelessWidget {
 }
 
 Route<dynamic> onGenerateRoute(RouteSettings settings) {
-  log('Navigating to route: ${settings.name} with arguments: ${settings.arguments}');
-  
+  log(
+    'Navigating to route: ${settings.name} with arguments: ${settings.arguments}',
+  );
+
   // التحقق من تسجيل الدخول للصفحات المحمية
   final authService = getIt<FirebaseAuthService>();
   final protectedRoutes = [
@@ -122,11 +122,10 @@ Route<dynamic> onGenerateRoute(RouteSettings settings) {
     // يمكنك إضافة المزيد من الصفحات المحمية هنا
   ];
 
-  if (protectedRoutes.contains(settings.name) && !authService.isUserLoggedIn()) {
+  if (protectedRoutes.contains(settings.name) &&
+      !authService.isUserLoggedIn()) {
     log('Access denied to ${settings.name} - User not logged in');
-    return MaterialPageRoute(
-      builder: (_) => const LoginRequiredScreen(),
-    );
+    return MaterialPageRoute(builder: (_) => const LoginRequiredScreen());
   }
 
   switch (settings.name) {
@@ -141,17 +140,20 @@ Route<dynamic> onGenerateRoute(RouteSettings settings) {
       if (product == null) {
         log('Error: No product data provided for CustomProductDetailScreen');
         return MaterialPageRoute(
-          builder: (_) => const Scaffold(
-            body: Center(
-              child: Text(
-                'خطأ: لم يتم تمرير بيانات العرض',
-                style: TextStyle(fontSize: 16, color: Colors.red),
+          builder:
+              (_) => const Scaffold(
+                body: Center(
+                  child: Text(
+                    'خطأ: لم يتم تمرير بيانات العرض',
+                    style: TextStyle(fontSize: 16, color: Colors.red),
+                  ),
+                ),
               ),
-            ),
-          ),
         );
       }
-      log('Navigating to CustomProductDetailScreen with product: ${product.id} - ${product.title}');
+      log(
+        'Navigating to CustomProductDetailScreen with product: ${product.id} - ${product.title}',
+      );
       return MaterialPageRoute(
         builder: (_) => CustomProductDetailScreen(product: product),
       );
@@ -164,9 +166,10 @@ Route<dynamic> onGenerateRoute(RouteSettings settings) {
       if (userId == null || userId.isEmpty) {
         log('Error: No userId provided for RatingScreen');
         return MaterialPageRoute(
-          builder: (_) => const Scaffold(
-            body: Center(child: Text('معرف المستخدم غير متوفر')),
-          ),
+          builder:
+              (_) => const Scaffold(
+                body: Center(child: Text('معرف المستخدم غير متوفر')),
+              ),
         );
       }
       return MaterialPageRoute(builder: (_) => RatingScreen(userId: userId));
@@ -181,9 +184,10 @@ Route<dynamic> onGenerateRoute(RouteSettings settings) {
       }
       log('Error: No farmerId provided for CoopDetails');
       return MaterialPageRoute(
-        builder: (_) => const Scaffold(
-          body: Center(child: Text('معرف الحضيرة غير متوفر')),
-        ),
+        builder:
+            (_) => const Scaffold(
+              body: Center(child: Text('معرف الحضيرة غير متوفر')),
+            ),
       );
     case CartScreen.id:
       return MaterialPageRoute(builder: (_) => const CartScreen());
@@ -194,22 +198,32 @@ Route<dynamic> onGenerateRoute(RouteSettings settings) {
     case CoopsScreen.id:
       return MaterialPageRoute(builder: (_) => const CoopsScreen());
     case CheckoutFlow.id:
-      return MaterialPageRoute(builder: (_) => const CheckoutFlow());
-    case CheckoutScreen.id:
+      final selectedItems =
+          settings.arguments as List<Map<String, dynamic>>? ?? [];
+      debugPrint('onGenerateRoute: CheckoutFlow arguments = $selectedItems');
       return MaterialPageRoute(
-        builder: (_) => BlocProvider(
-          create: (context) => CartCubit()..loadCartItems(),
-          child: const CheckoutScreen(),
-        ),
+        builder: (_) => CheckoutFlow(),
+        settings: RouteSettings(arguments: selectedItems), // تمرير arguments
+      );
+    case CheckoutScreen.id:
+      final selectedItems =
+          settings.arguments as List<Map<String, dynamic>>? ?? [];
+      return MaterialPageRoute(
+        builder:
+            (_) => BlocProvider(
+              create: (context) => CartCubit()..loadCartItems(),
+              child: CheckoutScreen(selectedItems: selectedItems),
+            ),
       );
     case CongratesScreen.id:
       final String? orderNumber = settings.arguments as String?;
       if (orderNumber == null || orderNumber.isEmpty) {
         log('Error: No orderNumber provided for CongratesScreen');
         return MaterialPageRoute(
-          builder: (_) => const Scaffold(
-            body: Center(child: Text('رقم الطلب غير متوفر')),
-          ),
+          builder:
+              (_) => const Scaffold(
+                body: Center(child: Text('رقم الطلب غير متوفر')),
+              ),
         );
       }
       return MaterialPageRoute(
@@ -227,21 +241,24 @@ Route<dynamic> onGenerateRoute(RouteSettings settings) {
           arguments.containsKey('productId') &&
           arguments.containsKey('product')) {
         final String productId = arguments['productId'] as String;
-        final Map<String, dynamic> product = arguments['product'] as Map<String, dynamic>;
+        final Map<String, dynamic> product =
+            arguments['product'] as Map<String, dynamic>;
         if (productId.isNotEmpty) {
           return MaterialPageRoute(
-            builder: (_) => ProductDetailsScreen(
-              productId: productId,
-              product: product,
-            ),
+            builder:
+                (_) => ProductDetailsScreen(
+                  productId: productId,
+                  product: product,
+                ),
           );
         }
       }
       log('Error: Invalid product data for ProductDetailsScreen');
       return MaterialPageRoute(
-        builder: (_) => const Scaffold(
-          body: Center(child: Text('معرف المنتج أو البيانات غير متوفرة')),
-        ),
+        builder:
+            (_) => const Scaffold(
+              body: Center(child: Text('معرف المنتج أو البيانات غير متوفرة')),
+            ),
       );
     case HomeScreen.id:
       return MaterialPageRoute(builder: (_) => const HomeScreen());
@@ -256,7 +273,9 @@ Route<dynamic> onGenerateRoute(RouteSettings settings) {
     default:
       log('Error: Unknown route: ${settings.name}');
       return MaterialPageRoute(
-        builder: (_) => const Scaffold(body: Center(child: Text('الصفحة غير موجودة'))),
+        builder:
+            (_) =>
+                const Scaffold(body: Center(child: Text('الصفحة غير موجودة'))),
       );
   }
 }

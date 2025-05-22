@@ -10,6 +10,7 @@ class CartCubit extends Cubit<CartState> {
   final CartService _cartService = getIt<CartService>();
   StreamSubscription? _cartSubscription;
   List<Map<String, dynamic>> lastKnownItems = [];
+  List<String> selectedItems = []; // قائمة لتخزين معرفات المنتجات المختارة
 
   CartCubit() : super(CartInitial());
 
@@ -21,7 +22,6 @@ class CartCubit extends Cubit<CartState> {
     required double totalPrice,
   }) async {
     try {
-      // استخدام CartUpdating بدلاً من CartLoading للتمييز بين العمليات
       emit(CartUpdating('جاري إضافة المنتج...'));
 
       await _cartService.addToCart(
@@ -31,7 +31,6 @@ class CartCubit extends Cubit<CartState> {
         totalPrice: totalPrice,
       );
 
-      // إضافة المنتج مؤقتًا إلى _lastKnownItems لضمان استمرارية العرض
       final newItem = {
         'productId': productId,
         'productData': productData,
@@ -40,7 +39,6 @@ class CartCubit extends Cubit<CartState> {
       };
 
       final updatedItems = [...lastKnownItems];
-      // تحقق ما إذا كان المنتج موجودًا بالفعل
       final existingIndex = updatedItems.indexWhere(
         (item) => item['productId'] == productId,
       );
@@ -56,11 +54,9 @@ class CartCubit extends Cubit<CartState> {
       emit(CartLoaded(updatedItems, totalCartValue));
       emit(CartSuccess('تمت إضافة المنتج بنجاح'));
 
-      // تحديث قائمة المنتجات بعد الإضافة بعد فترة قصيرة
       await Future.delayed(const Duration(milliseconds: 300));
       _refreshCartItems();
     } catch (e) {
-      // في حالة الخطأ، استعادة الحالة السابقة إذا كانت معروفة
       if (lastKnownItems.isNotEmpty) {
         final totalCartValue = _calculateTotalCartValue(lastKnownItems);
         emit(CartLoaded(lastKnownItems, totalCartValue));
@@ -72,7 +68,6 @@ class CartCubit extends Cubit<CartState> {
   // تحميل منتجات السلة مع الاشتراك في التغييرات
   void loadCartItems() {
     try {
-      // الحفاظ على الحالة القديمة إذا كانت محملة مسبقًا
       final previousState = state;
       if (previousState is! CartLoaded) {
         emit(CartLoading());
@@ -80,35 +75,35 @@ class CartCubit extends Cubit<CartState> {
 
       _refreshCartItems();
     } catch (e) {
-      // في حالة الخطأ، استعادة الحالة السابقة إذا كانت معروفة
       if (lastKnownItems.isNotEmpty) {
         final totalCartValue = _calculateTotalCartValue(lastKnownItems);
         emit(CartLoaded(lastKnownItems, totalCartValue));
       } else {
-        emit(CartError('خطأ في تحميل السلة: ${e.toString()}'));
+        emit(CartLoaded([], 0));
       }
     }
   }
 
   // دالة خاصة لتحديث بيانات السلة
   void _refreshCartItems() {
-    // إلغاء الاشتراك السابق إن وجد
     _cartSubscription?.cancel();
 
-    // الاشتراك في تدفق بيانات السلة
     _cartSubscription = _cartService.getCartItems().listen(
       (items) {
         lastKnownItems = items;
+        // إعادة ضبط المنتجات المختارة إذا كانت غير موجودة في القائمة الجديدة
+        selectedItems.removeWhere(
+          (id) => !items.any((item) => item['productId'] == id),
+        );
         final totalCartValue = _calculateTotalCartValue(items);
         emit(CartLoaded(items, totalCartValue));
       },
       onError: (error) {
-        // لو الخطأ بسبب مهلة زمنية أو مشكلة إنترنت
         if (lastKnownItems.isNotEmpty) {
           final totalCartValue = _calculateTotalCartValue(lastKnownItems);
           emit(CartLoaded(lastKnownItems, totalCartValue));
         } else {
-          emit(CartError('خطأ في تحميل السلة: ${error.toString()}'));
+          emit(CartLoaded([], 0));
         }
       },
     );
@@ -117,49 +112,44 @@ class CartCubit extends Cubit<CartState> {
   // حذف منتج من السلة مع تحسين تجربة المستخدم
   Future<void> removeFromCart(String productId) async {
     try {
-      // الاحتفاظ بالحالة الحالية للسلة قبل الحذف
       final currentState = state;
       List<Map<String, dynamic>> previousItems = [];
 
       if (currentState is CartLoaded) {
         previousItems = List<Map<String, dynamic>>.from(currentState.cartItems);
 
-        // إنشاء نسخة من القائمة الحالية وإزالة المنتج منها نظريًا (للتحديث السريع)
         final updatedItems = List<Map<String, dynamic>>.from(previousItems)
           ..removeWhere((item) => item['productId'] == productId);
 
         lastKnownItems = updatedItems;
+        selectedItems.remove(productId); // إزالة المنتج من المنتجات المختارة
         final updatedTotal = _calculateTotalCartValue(updatedItems);
 
-        // تحديث واجهة المستخدم مباشرة قبل الانتظار للاستجابة من الخادم
         emit(CartLoaded(updatedItems, updatedTotal));
 
-        // تنفيذ عملية الحذف الفعلية على الخادم
         await _cartService.removeFromCart(productId);
 
-        // تحديث القائمة بعد الحذف
         _refreshCartItems();
       } else {
-        // استخدام _lastKnownItems إذا كان متاحًا
         previousItems = List<Map<String, dynamic>>.from(lastKnownItems);
         final updatedItems = List<Map<String, dynamic>>.from(previousItems)
           ..removeWhere((item) => item['productId'] == productId);
 
         lastKnownItems = updatedItems;
+        selectedItems.remove(productId); // إزالة المنتج من المنتجات المختارة
         final updatedTotal = _calculateTotalCartValue(updatedItems);
         emit(CartLoaded(updatedItems, updatedTotal));
 
-        // تنفيذ عملية الحذف الفعلية
         await _cartService.removeFromCart(productId);
         _refreshCartItems();
       }
     } catch (e) {
-      // في حالة الخطأ، استخدم آخر بيانات معروفة
       if (lastKnownItems.isNotEmpty) {
         final totalCartValue = _calculateTotalCartValue(lastKnownItems);
         emit(CartLoaded(lastKnownItems, totalCartValue));
+      } else {
+        emit(CartLoaded([], 0));
       }
-      emit(CartError('فشل حذف المنتج: ${e.toString()}'));
     }
   }
 
@@ -169,15 +159,50 @@ class CartCubit extends Cubit<CartState> {
       emit(CartUpdating('جاري تفريغ السلة...'));
       await _cartService.clearCart();
       lastKnownItems = [];
+      selectedItems = []; // إعادة ضبط المنتجات المختارة
       emit(CartLoaded([], 0));
     } catch (e) {
-      // في حالة الخطأ، استخدم آخر بيانات معروفة
       if (lastKnownItems.isNotEmpty) {
         final totalCartValue = _calculateTotalCartValue(lastKnownItems);
         emit(CartLoaded(lastKnownItems, totalCartValue));
+      } else {
+        emit(CartLoaded([], 0));
       }
-      emit(CartError('فشل تفريغ السلة: ${e.toString()}'));
     }
+  }
+
+  // التحكم في اختيار/إلغاء اختيار منتج
+  void toggleItemSelection(String productId) {
+    if (selectedItems.contains(productId)) {
+      selectedItems.remove(productId);
+    } else {
+      selectedItems.add(productId);
+    }
+    // إعادة إصدار الحالة لتحديث واجهة المستخدم
+    final totalCartValue = _calculateTotalCartValue(lastKnownItems);
+    emit(CartLoaded(lastKnownItems, totalCartValue));
+  }
+
+  // تحديد الكل
+  void selectAllItems() {
+    selectedItems =
+        lastKnownItems.map((item) => item['productId'] as String).toList();
+    final totalCartValue = _calculateTotalCartValue(lastKnownItems);
+    emit(CartLoaded(lastKnownItems, totalCartValue));
+  }
+
+  // إلغاء تحديد الكل
+  void deselectAllItems() {
+    selectedItems = [];
+    final totalCartValue = _calculateTotalCartValue(lastKnownItems);
+    emit(CartLoaded(lastKnownItems, totalCartValue));
+  }
+
+  // إرجاع المنتجات المختارة
+  List<Map<String, dynamic>> getSelectedItems() {
+    return lastKnownItems
+        .where((item) => selectedItems.contains(item['productId']))
+        .toList();
   }
 
   // حساب القيمة الإجمالية للسلة بشكل آمن
@@ -185,7 +210,6 @@ class CartCubit extends Cubit<CartState> {
     if (items.isEmpty) return 0;
 
     return items.fold(0, (sum, item) {
-      // التعامل مع القيم الفارغة بشكل آمن
       final price = item['totalPrice'];
       if (price is num) {
         return sum + price;

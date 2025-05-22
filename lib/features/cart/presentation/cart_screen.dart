@@ -29,7 +29,6 @@ class CartScreen extends StatelessWidget {
               const Text('عربة التسوق', style: TextStyles.bold19),
               BlocConsumer<CartCubit, CartState>(
                 listener: (context, state) {
-                  // عرض رسالة نجاح عند إضافة منتج للسلة
                   if (state is CartSuccess) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
@@ -40,9 +39,7 @@ class CartScreen extends StatelessWidget {
                     );
                   }
 
-                  // عرض رسالة الخطأ فقط في حالة وجود خطأ حقيقي
                   if (state is CartError) {
-                    // تجاهل الخطأ إذا كان بسبب السلة الفاضية
                     if (!state.message.contains(
                           'انتهت مهلة جلب محتويات السلة',
                         ) ||
@@ -58,19 +55,16 @@ class CartScreen extends StatelessWidget {
                   }
                 },
                 builder: (context, state) {
-                  // عرض مؤشر التحميل عند بدء تحميل السلة
                   if (state is CartLoading) {
                     return const Expanded(
                       child: Center(child: CustomLoadingIndicator()),
                     );
                   }
 
-                  // عرض مؤشر التحديث عند إجراء عمليات على السلة
                   if (state is CartUpdating) {
                     return Expanded(
                       child: Stack(
                         children: [
-                          // عرض قائمة المنتجات الحالية إذا كانت موجودة
                           if (context
                               .read<CartCubit>()
                               .lastKnownItems
@@ -79,8 +73,6 @@ class CartScreen extends StatelessWidget {
                               context,
                               context.read<CartCubit>().lastKnownItems,
                             ),
-
-                          // طبقة شفافة مع مؤشر دوّار
                           Container(
                             color: Colors.black.withOpacity(0.1),
                             child: Center(
@@ -102,7 +94,6 @@ class CartScreen extends StatelessWidget {
                     );
                   }
 
-                  // عرض قائمة المنتجات عند توفرها
                   if (state is CartLoaded) {
                     if (state.cartItems.isEmpty) {
                       return Expanded(
@@ -122,16 +113,86 @@ class CartScreen extends StatelessWidget {
                     }
 
                     return Expanded(
-                      child: _buildCartList(context, state.cartItems),
+                      child: Column(
+                        children: [
+                          // أزرار تحديد الكل وإلغاء تحديد الكل
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8.0),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                TextButton(
+                                  onPressed: () {
+                                    context.read<CartCubit>().selectAllItems();
+                                  },
+                                  child: const Text(
+                                    'تحديد الكل',
+                                    style: TextStyles.regular13,
+                                  ),
+                                ),
+                                TextButton(
+                                  onPressed: () {
+                                    context
+                                        .read<CartCubit>()
+                                        .deselectAllItems();
+                                  },
+                                  child: const Text(
+                                    'إلغاء تحديد الكل',
+                                    style: TextStyles.regular13,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Expanded(
+                            child: _buildCartList(context, state.cartItems),
+                          ),
+                        ],
+                      ),
                     );
                   }
 
-                  // حالات أخرى - استخدام آخر بيانات معروفة أو عرض السلة فارغة
                   final lastKnownItems =
                       context.read<CartCubit>().lastKnownItems;
                   if (lastKnownItems.isNotEmpty) {
                     return Expanded(
-                      child: _buildCartList(context, lastKnownItems),
+                      child: Column(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8.0),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                TextButton(
+                                  onPressed: () {
+                                    context.read<CartCubit>().selectAllItems();
+                                  },
+                                  child: const Text(
+                                    'تحديد الكل',
+                                    style: TextStyles.regular13,
+                                  ),
+                                ),
+                                TextButton(
+                                  onPressed: () {
+                                    context
+                                        .read<CartCubit>()
+                                        .deselectAllItems();
+                                  },
+                                  child: Text(
+                                    'إلغاء تحديد الكل',
+                                    style: TextStyles.regular13.copyWith(
+                                      color: AppColors.kRedColor,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Expanded(
+                            child: _buildCartList(context, lastKnownItems),
+                          ),
+                        ],
+                      ),
                     );
                   }
 
@@ -154,23 +215,38 @@ class CartScreen extends StatelessWidget {
               // زر الشراء
               BlocBuilder<CartCubit, CartState>(
                 builder: (context, state) {
-                  // إظهار زر الشراء فقط إذا كانت هناك منتجات في السلة
                   final hasItems =
                       state is CartLoaded && state.cartItems.isNotEmpty ||
                       context.read<CartCubit>().lastKnownItems.isNotEmpty;
+                  final hasSelectedItems =
+                      context.read<CartCubit>().selectedItems.isNotEmpty;
 
                   return Padding(
                     padding: const EdgeInsets.symmetric(vertical: 16.0),
                     child:
                         hasItems
-                            ? CustomButton(
-                              onPressed:
-                                  () => Navigator.pushNamed(
-                                    context,
-                                    CheckoutFlow.id,
-                                  ),
+                            ? CustomCartButton(
+                              onPressed: () {
+                                final selectedItems =
+                                    context
+                                        .read<CartCubit>()
+                                        .getSelectedItems();
+                                debugPrint(
+                                  'CartScreen: Navigating to CheckoutFlow with selectedItems = $selectedItems',
+                                );
+                                Navigator.pushNamed(
+                                  context,
+                                  CheckoutFlow.id,
+                                  arguments: selectedItems,
+                                );
+                              },
                               text: 'شراء',
-                              color: AppColors.kprimaryColor,
+                              itemCount:
+                                  context
+                                      .read<CartCubit>()
+                                      .selectedItems
+                                      .length,
+                              enabled: hasSelectedItems,
                             )
                             : const SizedBox(),
                   );
@@ -195,6 +271,12 @@ class CartScreen extends StatelessWidget {
         final item = items[index];
         return CartItemWidget(
           item: item,
+          isSelected: context.read<CartCubit>().selectedItems.contains(
+            item['productId'],
+          ),
+          onToggleSelection: () {
+            context.read<CartCubit>().toggleItemSelection(item['productId']);
+          },
           onRemove:
               () => context.read<CartCubit>().removeFromCart(item['productId']),
         );
@@ -230,7 +312,7 @@ class EmptyCartView extends StatelessWidget {
           const SizedBox(height: 32),
           if (onBackToShopping != null)
             CustomButton(
-              onPressed: onBackToShopping!,
+              onPressed: onBackToShopping,
               text: 'استمر في التسوق',
               color: AppColors.kprimaryColor,
             ),
@@ -242,9 +324,17 @@ class EmptyCartView extends StatelessWidget {
 
 class CartItemWidget extends StatelessWidget {
   final Map<String, dynamic> item;
+  final bool isSelected;
+  final VoidCallback onToggleSelection;
   final VoidCallback onRemove;
 
-  const CartItemWidget({super.key, required this.item, required this.onRemove});
+  const CartItemWidget({
+    super.key,
+    required this.item,
+    required this.isSelected,
+    required this.onToggleSelection,
+    required this.onRemove,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -259,6 +349,11 @@ class CartItemWidget extends StatelessWidget {
       ),
       child: Row(
         children: [
+          Checkbox(
+            value: isSelected,
+            onChanged: (value) => onToggleSelection(),
+            activeColor: AppColors.kprimaryColor,
+          ),
           Container(
             height: 100,
             width: 100,
@@ -281,9 +376,12 @@ class CartItemWidget extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        productData['name'] ?? 'منتج غير معروف',
-                        style: TextStyles.semiBold16,
+                      Expanded(
+                        child: Text(
+                          productData['name'] ?? 'منتج غير معروف',
+                          style: TextStyles.semiBold16,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                       IconButton(
                         onPressed: onRemove,

@@ -10,9 +10,15 @@ class CheckoutFlow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // استقبال المنتجات المختارة من arguments
+    final selectedItems =
+        ModalRoute.of(context)?.settings.arguments
+            as List<Map<String, dynamic>>? ??
+        [];
+    debugPrint('CheckoutFlow: selectedItems = $selectedItems'); // إضافة تسجيل
     return BlocProvider<CartCubit>(
       create: (context) => CartCubit()..loadCartItems(),
-      child: const CheckoutScreen(),
+      child: CheckoutScreen(selectedItems: selectedItems),
     );
   }
 }
