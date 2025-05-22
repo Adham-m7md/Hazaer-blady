@@ -83,8 +83,7 @@ class CartService {
     final connectivityResult = await Connectivity().checkConnectivity();
     if (connectivityResult == ConnectivityResult.none) {
       _logger.error('لا يوجد اتصال بالإنترنت');
-      yield [];
-      return;
+      throw Exception('لا يوجد اتصال بالإنترنت');
     }
 
     final userId = _authService.getCurrentUser()?.uid;
@@ -100,29 +99,18 @@ class CartService {
         .collection('cart')
         .orderBy('addedAt', descending: true)
         .snapshots()
-        .timeout(
-          const Duration(seconds: 15),
-          onTimeout: (sink) {
-            _logger.error('انتهت مهلة جلب محتويات السلة');
-            sink.addError(
-              'انتهت مهلة جلب محتويات السلة، تحقق من اتصالك بالإنترنت',
-            );
-          },
-        )
         .map((snapshot) {
-          final items =
-              snapshot.docs.map((doc) {
-                final data = doc.data();
-                if (!data.containsKey('productData') ||
-                    data['productData'] == null) {
-                  _logger.warning('منتج بدون بيانات في السلة: ${doc.id}');
-                  data['productData'] = {
-                    'name': 'منتج غير متوفر',
-                    'image_url': '',
-                  };
-                }
-                return data;
-              }).toList();
+          final items = snapshot.docs.map((doc) {
+            final data = doc.data();
+            if (!data.containsKey('productData') || data['productData'] == null) {
+              _logger.warning('منتج بدون بيانات في السلة: ${doc.id}');
+              data['productData'] = {
+                'name': 'منتج غير متوفر',
+                'image_url': '',
+              };
+            }
+            return data;
+          }).toList();
 
           _logger.info('تم جلب ${items.length} منتج من السلة');
           return items;

@@ -40,15 +40,21 @@ class CartScreen extends StatelessWidget {
                     );
                   }
 
-                  // عرض رسالة الخطأ بشكل مؤقت دون التأثير على واجهة المستخدم
+                  // عرض رسالة الخطأ فقط في حالة وجود خطأ حقيقي
                   if (state is CartError) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(state.message),
-                        backgroundColor: Colors.red,
-                        duration: const Duration(seconds: 2),
-                      ),
-                    );
+                    // تجاهل الخطأ إذا كان بسبب السلة الفاضية
+                    if (!state.message.contains(
+                          'انتهت مهلة جلب محتويات السلة',
+                        ) ||
+                        context.read<CartCubit>().lastKnownItems.isNotEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(state.message),
+                          backgroundColor: Colors.red,
+                          duration: const Duration(seconds: 2),
+                        ),
+                      );
+                    }
                   }
                 },
                 builder: (context, state) {

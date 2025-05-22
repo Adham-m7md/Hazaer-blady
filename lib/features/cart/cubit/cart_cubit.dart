@@ -85,7 +85,7 @@ class CartCubit extends Cubit<CartState> {
         final totalCartValue = _calculateTotalCartValue(lastKnownItems);
         emit(CartLoaded(lastKnownItems, totalCartValue));
       } else {
-        emit(CartError('خطأ غير متوقع: ${e.toString()}'));
+        emit(CartError('خطأ في تحميل السلة: ${e.toString()}'));
       }
     }
   }
@@ -103,7 +103,7 @@ class CartCubit extends Cubit<CartState> {
         emit(CartLoaded(items, totalCartValue));
       },
       onError: (error) {
-        // في حالة الخطأ، استخدم آخر بيانات معروفة
+        // لو الخطأ بسبب مهلة زمنية أو مشكلة إنترنت
         if (lastKnownItems.isNotEmpty) {
           final totalCartValue = _calculateTotalCartValue(lastKnownItems);
           emit(CartLoaded(lastKnownItems, totalCartValue));
@@ -124,7 +124,7 @@ class CartCubit extends Cubit<CartState> {
       if (currentState is CartLoaded) {
         previousItems = List<Map<String, dynamic>>.from(currentState.cartItems);
 
-        // إنشاء نسخة من القائمة الحالية وإزالة المنتج منها مؤقتًا (للتحديث السريع)
+        // إنشاء نسخة من القائمة الحالية وإزالة المنتج منها نظريًا (للتحديث السريع)
         final updatedItems = List<Map<String, dynamic>>.from(previousItems)
           ..removeWhere((item) => item['productId'] == productId);
 
