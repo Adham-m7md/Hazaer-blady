@@ -341,8 +341,7 @@ class CartItemWidget extends StatelessWidget {
     final productData = item['productData'] as Map<String, dynamic>;
 
     return Container(
-      margin: const EdgeInsets.only(top: 16),
-      padding: const EdgeInsets.all(8),
+      padding: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
         border: Border.all(color: AppColors.klightGrayColor),
         borderRadius: const BorderRadius.all(Radius.circular(12)),
@@ -355,13 +354,13 @@ class CartItemWidget extends StatelessWidget {
             activeColor: AppColors.kprimaryColor,
           ),
           Container(
-            height: 100,
-            width: 100,
+            width: 50,
+            height: 50,
             color: AppColors.kFillGrayColor,
             child: Image.network(
               productData['image_url'] ?? productData['imageUrl'] ?? '',
-              width: 70,
-              height: 70,
+              width: 50,
+              height: 50,
               fit: BoxFit.cover,
               errorBuilder:
                   (context, error, stackTrace) => const Icon(Icons.error),
@@ -371,6 +370,7 @@ class CartItemWidget extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8),
               child: Column(
+                spacing: 4,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
@@ -398,21 +398,17 @@ class CartItemWidget extends StatelessWidget {
                       color: AppColors.kGrayColor,
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'الكمية: ${item['quantity']}',
-                        style: TextStyles.bold13,
-                      ),
-                      Text(
-                        '${item['totalPrice']} دينار',
-                        style: TextStyles.bold16.copyWith(
-                          color: AppColors.kprimaryColor,
-                        ),
-                      ),
-                    ],
+                  Text(
+                    'الكمية: ${item['quantity']}',
+                    style: TextStyles.bold13.copyWith(
+                      color: AppColors.kGrayColor,
+                    ),
+                  ),
+                  Text(
+                    '${item['totalPrice']} دينار',
+                    style: TextStyles.bold16.copyWith(
+                      color: AppColors.kprimaryColor,
+                    ),
                   ),
                 ],
               ),

@@ -216,6 +216,7 @@ class _ProductFormFields extends StatelessWidget {
           },
         ),
         CustomTextFormFeild(
+          maxLength: 6,
           hintText: 'السعر للكيلو',
           controller: priceController,
           keyBoardType: TextInputType.number,

@@ -15,7 +15,9 @@ class CustomTextFormFeild extends StatelessWidget {
     this.controller,
     this.enabled = true,
     this.maxLines,
+    this.maxLength,
   });
+
   final String hintText;
   final Widget? suffixIcon;
   final TextInputType keyBoardType;
@@ -25,6 +27,8 @@ class CustomTextFormFeild extends StatelessWidget {
   final TextEditingController? controller;
   final bool enabled;
   final int? maxLines;
+  final int? maxLength;
+
   @override
   Widget build(BuildContext context) {
     return TextFormField(
@@ -35,6 +39,7 @@ class CustomTextFormFeild extends StatelessWidget {
       keyboardType: keyBoardType,
       controller: controller,
       maxLines: maxLines,
+      maxLength: maxLength,
       decoration: InputDecoration(
         filled: true,
         fillColor: AppColors.kFillGrayColor,

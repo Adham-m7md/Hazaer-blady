@@ -61,7 +61,9 @@ class Product extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    product['name'] ?? 'منتج غير معروف',
+                    (product['name'] ?? 'منتج غير معروف').length > 15
+                        ? '${(product['name'] ?? 'منتج غير معروف').substring(0, 15)}...'
+                        : product['name'] ?? 'منتج غير معروف',
                     style: TextStyles.semiBold19,
                   ),
                   FutureBuilder<Map<String, dynamic>>(
