@@ -82,7 +82,7 @@ class SettingsScreen extends StatelessWidget {
     bool isLoading = false;
 
     // استخدام الخدمة الجديدة التي أنشأناها
-    final userDeletionService = UserDeletionService();
+    final userDeletionService = EnhancedUserDeletionService();
 
     showDialog(
       context: context,
