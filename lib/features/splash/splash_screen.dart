@@ -14,6 +14,7 @@ import 'package:hadaer_blady/features/onboarding/view/onboarding_view.dart';
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
   static const String id = '/';
+
   @override
   State<SplashScreen> createState() => _SplashScreenState();
 }
@@ -68,14 +69,34 @@ class _SplashScreenState extends State<SplashScreen> {
 
   void excuteNavigation() async {
     FirebaseAuthService firebaseAuthService = FirebaseAuthService();
-    bool isLogedIn = await firebaseAuthService.isEmailVerified();
-    bool isOnBoardingVievSeen = Prefs.getBool(kIsOnBoardigViewSeen);
+
+    // Check if the user is logged in
+    bool isUserLoggedIn = firebaseAuthService.isUserLoggedIn();
+
+    // Check email verification status if the user is logged in
+    bool isEmailVerified = false;
+    if (isUserLoggedIn) {
+      isEmailVerified = await firebaseAuthService.isEmailVerified();
+    }
+
+    // Check if onboarding has been seen
+    bool isOnBoardingViewSeen = Prefs.getBool(kIsOnBoardigViewSeen);
+
     Future.delayed(const Duration(seconds: 5), () {
-      if (isLogedIn) {
+      // If user is logged in and email is verified, go directly to HomeScreen
+      if (isUserLoggedIn && isEmailVerified) {
         Navigator.pushReplacementNamed(context, HomeScreen.id);
-      } else if (isOnBoardingVievSeen) {
+      }
+      // If user is logged in but email is not verified, go to SigninScreen
+      else if (isUserLoggedIn && !isEmailVerified) {
         Navigator.pushReplacementNamed(context, SigninScreen.id);
-      } else {
+      }
+      // If user is not logged in and has seen onboarding, go to SigninScreen
+      else if (isOnBoardingViewSeen) {
+        Navigator.pushReplacementNamed(context, SigninScreen.id);
+      }
+      // If user has not seen onboarding, go to OnboardingView
+      else {
         Navigator.pushReplacementNamed(context, OnboardingView.id);
       }
     });
