@@ -66,9 +66,9 @@ class _SplashScreenState extends State<SplashScreen> {
     );
   }
 
-  void excuteNavigation() {
+  void excuteNavigation() async {
     FirebaseAuthService firebaseAuthService = FirebaseAuthService();
-    bool isLogedIn = firebaseAuthService.isUserLoggedIn();
+    bool isLogedIn = await firebaseAuthService.isEmailVerified();
     bool isOnBoardingVievSeen = Prefs.getBool(kIsOnBoardigViewSeen);
     Future.delayed(const Duration(seconds: 5), () {
       if (isLogedIn) {

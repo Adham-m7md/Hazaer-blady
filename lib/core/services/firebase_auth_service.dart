@@ -227,7 +227,7 @@ class FirebaseAuthService {
       } else {
         user = await _signInWithPhone(cleanInput, password);
       }
-      
+
       // التحقق من تأكيد البريد الإلكتروني
       await user.reload();
       if (!user.emailVerified) {
@@ -249,59 +249,60 @@ class FirebaseAuthService {
   }
 
   // Sign in with email
-Future<User> _signInWithEmail(String email, String password) async {
-  final credential = await auth.signInWithEmailAndPassword(
-    email: email,
-    password: password,
-  );
+  Future<User> _signInWithEmail(String email, String password) async {
+    final credential = await auth.signInWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
 
-  final user = credential.user!;
-  final userDoc = await firestore.collection('users').doc(user.uid).get();
-  final userData = userDoc.data() ?? {};
-  final userName = userData['name'] as String? ?? 'User';
-  final userEmail = userData['email'] as String? ?? email;
-  final userPhone = userData['phone'] as String? ?? '';
-  final userAddress = userData['address'] as String? ?? '';
-  final userCity = userData['city'] as String? ?? '';
-  final userProfileImageUrl = userData['profile_image_url'] as String? ?? '';
-  final userJobTitle = userData['job_title'] as String? ?? '';
+    final user = credential.user!;
+    final userDoc = await firestore.collection('users').doc(user.uid).get();
+    final userData = userDoc.data() ?? {};
+    final userName = userData['name'] as String? ?? 'User';
+    final userEmail = userData['email'] as String? ?? email;
+    final userPhone = userData['phone'] as String? ?? '';
+    final userAddress = userData['address'] as String? ?? '';
+    final userCity = userData['city'] as String? ?? '';
+    final userProfileImageUrl = userData['profile_image_url'] as String? ?? '';
+    final userJobTitle = userData['job_title'] as String? ?? '';
 
-  await _saveUserToPrefs(
-    name: userName,
-    email: userEmail,
-    phone: userPhone,
-    address: userAddress,
-    city: userCity,
-    profileImageUrl: userProfileImageUrl,
-    jobTitle: userJobTitle,
-  );
+    await _saveUserToPrefs(
+      name: userName,
+      email: userEmail,
+      phone: userPhone,
+      address: userAddress,
+      city: userCity,
+      profileImageUrl: userProfileImageUrl,
+      jobTitle: userJobTitle,
+    );
 
-  // ✅ تحديث FCM token يدويًا مباشرة بعد تسجيل الدخول
-  try {
-    final token = await FirebaseMessaging.instance.getToken();
-    if (token != null) {
-      await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
-        'fcmToken': token,
-      });
-      log('✅ FCM token updated manually: $token');
-    } else {
-      log('⚠️ Failed to get FCM token.');
+    // ✅ تحديث FCM token يدويًا مباشرة بعد تسجيل الدخول
+    try {
+      final token = await FirebaseMessaging.instance.getToken();
+      if (token != null) {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .update({'fcmToken': token});
+        log('✅ FCM token updated manually: $token');
+      } else {
+        log('⚠️ Failed to get FCM token.');
+      }
+    } catch (e) {
+      log('❌ Error updating FCM token: $e');
     }
-  } catch (e) {
-    log('❌ Error updating FCM token: $e');
-  }
 
-  // ✅ إضافة مستمع للتحديث المستقبلي
-  FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
-    await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
-      'fcmToken': newToken,
+    // ✅ إضافة مستمع للتحديث المستقبلي
+    FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).update(
+        {'fcmToken': newToken},
+      );
+      log('🔄 FCM token refreshed: $newToken');
     });
-    log('🔄 FCM token refreshed: $newToken');
-  });
 
-  log('✅ Sign in successful with email');
-  return user;
-}
+    log('✅ Sign in successful with email');
+    return user;
+  }
 
   // Sign in with phone
   Future<User> _signInWithPhone(String phone, String password) async {
@@ -338,27 +339,28 @@ Future<User> _signInWithEmail(String email, String password) async {
       profileImageUrl: userProfileImageUrl,
       jobTitle: userJobTitle,
     );
-     try {
-    final token = await FirebaseMessaging.instance.getToken();
-    if (token != null) {
-      await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
-        'fcmToken': token,
-      });
-      log('✅ FCM token updated manually: $token');
-    } else {
-      log('⚠️ Failed to get FCM token.');
+    try {
+      final token = await FirebaseMessaging.instance.getToken();
+      if (token != null) {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .update({'fcmToken': token});
+        log('✅ FCM token updated manually: $token');
+      } else {
+        log('⚠️ Failed to get FCM token.');
+      }
+    } catch (e) {
+      log('❌ Error updating FCM token: $e');
     }
-  } catch (e) {
-    log('❌ Error updating FCM token: $e');
-  }
 
-  // ✅ إضافة مستمع للتحديث المستقبلي
-  FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
-    await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
-      'fcmToken': newToken,
+    // ✅ إضافة مستمع للتحديث المستقبلي
+    FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).update(
+        {'fcmToken': newToken},
+      );
+      log('🔄 FCM token refreshed: $newToken');
     });
-    log('🔄 FCM token refreshed: $newToken');
-  });
     log('User found with email: $userEmail');
     return user;
   }
@@ -592,5 +594,24 @@ Future<User> _signInWithEmail(String email, String password) async {
         print('No user logged in to update FCM token.');
       }
     });
+  }
+
+  Future<bool> isEmailVerified() async {
+    try {
+      final user = auth.currentUser;
+      if (user == null) {
+        log('No user logged in to check email verification');
+        return false;
+      }
+
+      // إعادة تحميل بيانات المستخدم للحصول على أحدث حالة
+      await user.reload();
+
+      log('Email verification status for ${user.email}: ${user.emailVerified}');
+      return user.emailVerified;
+    } catch (e) {
+      log('Error checking email verification status: $e');
+      return false;
+    }
   }
 }
