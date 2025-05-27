@@ -11,8 +11,8 @@ class PriceInfo extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        const Text('السعر للكيلو: ', style: TextStyles.semiBold19),
-        Text('$pricePerKg دينار', style: TextStyles.semiBold19),
+        const Text('السعر للكيلو: ', style: TextStyles.semiBold16),
+        Text('$pricePerKg دينار', style: TextStyles.semiBold16),
       ],
     );
   }

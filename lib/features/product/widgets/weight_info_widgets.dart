@@ -16,8 +16,8 @@ class WeightInfo extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        const Text('الوزن لكل وحدة: ', style: TextStyles.semiBold19),
-        Text('$minWeight~$maxWeight كيلو', style: TextStyles.semiBold19),
+        const Text('الوزن لكل وحدة: ', style: TextStyles.semiBold16),
+        Text('$minWeight~$maxWeight كيلو', style: TextStyles.semiBold16),
       ],
     );
   }

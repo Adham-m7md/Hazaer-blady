@@ -5,7 +5,6 @@ import 'package:hadaer_blady/core/services/get_it.dart';
 import 'package:hadaer_blady/core/services/rating_service.dart';
 import 'package:hadaer_blady/core/utils/app_directions.dart';
 import 'package:hadaer_blady/core/utils/app_text_styles.dart';
-import 'package:hadaer_blady/core/widgets/location.dart';
 import 'package:hadaer_blady/features/cart/cubit/cart_cubit.dart';
 import 'package:hadaer_blady/features/product/widgets/add_to_cart_button.dart';
 import 'package:hadaer_blady/features/product/widgets/farmer_info.dart';
@@ -89,20 +88,20 @@ class _ProductDetailsContentState extends State<ProductDetailsContent> {
                       farmerData: widget.farmerData,
                       farmerId: farmerId,
                     ),
-                    const LocationWidget(),
                   ],
                 ),
                 LocationInfo(farmerData: widget.farmerData),
                 // إنشاء BlocProvider جديد مع تأخير بدء الاستماع للتقييمات
                 BlocProvider(
-                  create: (context) => RatingCubit(
-                    ratingService: RatingService(),
-                    auth: getIt<FirebaseAuthService>().auth,
-                    userId: _farmerId,
-                  ),
+                  create:
+                      (context) => RatingCubit(
+                        ratingService: RatingService(),
+                        auth: getIt<FirebaseAuthService>().auth,
+                        userId: _farmerId,
+                      ),
                   child: RatingWithBlocBuilder(farmerId: _farmerId),
                 ),
-                const SizedBox(height: 16),
+
                 Text(
                   widget.productData['name'] ?? 'منتج غير معروف',
                   style: TextStyles.semiBold19,
@@ -170,10 +169,7 @@ class RatingWithBlocBuilder extends StatelessWidget {
               children: [
                 const Icon(Icons.star_outline, color: Colors.grey),
                 const SizedBox(width: 4),
-                const Text(
-                  '0.0',
-                  style: TextStyles.semiBold16,
-                ),
+                const Text('0.0', style: TextStyles.semiBold16),
                 const SizedBox(width: 8),
                 Text(
                   '(0 تقييم)',
@@ -189,7 +185,7 @@ class RatingWithBlocBuilder extends StatelessWidget {
             userId: farmerId,
           );
         }
-        
+
         // حالة افتراضية عندما لا توجد بيانات بعد
         return Padding(
           padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -197,10 +193,7 @@ class RatingWithBlocBuilder extends StatelessWidget {
             children: [
               const Icon(Icons.star_outline, color: Colors.grey),
               const SizedBox(width: 4),
-              const Text(
-                '0.0',
-                style: TextStyles.semiBold16,
-              ),
+              const Text('0.0', style: TextStyles.semiBold16),
               const SizedBox(width: 8),
               Text(
                 '(0 تقييم)',

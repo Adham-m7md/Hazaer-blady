@@ -29,7 +29,7 @@ class LocationInfo extends StatelessWidget {
         const SizedBox(width: 8),
         Text(
           '($city - $address)',
-          style: TextStyles.semiBold16.copyWith(color: AppColors.kGrayColor),
+          style: TextStyles.semiBold13.copyWith(color: AppColors.kGrayColor),
         ),
       ],
     );

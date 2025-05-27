@@ -12,9 +12,9 @@ class TotalPriceInfo extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        const Text('السعر الكلي: ', style: TextStyles.semiBold19),
+        const Text('السعر الكلي: ', style: TextStyles.semiBold16),
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
           decoration: BoxDecoration(
             color: AppColors.kprimaryColor,
             borderRadius: BorderRadius.circular(20),
@@ -28,7 +28,7 @@ class TotalPriceInfo extends StatelessWidget {
           ),
           child: Text(
             '$totalPrice دينار',
-            style: TextStyles.bold16.copyWith(color: Colors.white),
+            style: TextStyles.semiBold16.copyWith(color: Colors.white),
           ),
         ),
       ],

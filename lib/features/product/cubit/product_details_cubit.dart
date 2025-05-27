@@ -103,4 +103,9 @@ class ProductDetailsCubit extends Cubit<ProductDetailsState> {
       emit(state.copyWith(quantity: state.quantity - _quantityStep));
     }
   }
+  void updateQuantity(int newQuantity) {
+  if (newQuantity > 0) {
+    emit(state.copyWith(quantity: newQuantity));
+  }
+}
 }

@@ -10,7 +10,7 @@ class ActiveIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Container(
-        padding: const EdgeInsets.only(left: 16),
+        padding: const EdgeInsets.only(left: 8),
         decoration: ShapeDecoration(
           shape: const RoundedRectangleBorder(
             borderRadius: BorderRadius.all(Radius.circular(30)),

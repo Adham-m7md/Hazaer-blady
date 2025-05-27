@@ -1,15 +1,20 @@
+import 'dart:developer';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'dart:developer' as developer;
 
 class FarmerOrderService {
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  // الحصول على طلبات المزارع
   Stream<QuerySnapshot> getFarmerOrders() {
-    final user = FirebaseAuth.instance.currentUser;
+    final user = _auth.currentUser;
     if (user == null) {
-      throw Exception('يجب تسجيل الدخول لعرض الطلبات');
+      throw Exception('المستخدم غير مسجل دخول');
     }
 
-    return FirebaseFirestore.instance
+    return _firestore
         .collection('users')
         .doc(user.uid)
         .collection('farmer_orders')
@@ -17,59 +22,192 @@ class FarmerOrderService {
         .snapshots();
   }
 
+  // تحديث حالة الطلب
   Future<void> updateOrderStatus(String orderId, String newStatus) async {
     try {
-      final user = FirebaseAuth.instance.currentUser;
+      final user = _auth.currentUser;
       if (user == null) {
-        developer.log('No authenticated user found');
-        throw Exception('يجب تسجيل الدخول لتحديث حالة الطلب');
+        throw Exception('المستخدم غير مسجل دخول');
       }
 
-      developer.log('Updating order status for orderId: $orderId to $newStatus');
+      log('Updating order status for orderId: $orderId to $newStatus');
 
-      // جلب بيانات الطلب للحصول على user_id
-      final orderDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .collection('farmer_orders')
-          .doc(orderId)
-          .get();
+      // أولاً، الحصول على بيانات الطلب من farmer_orders للحصول على user_id
+      final farmerOrderDoc =
+          await _firestore
+              .collection('users')
+              .doc(user.uid)
+              .collection('farmer_orders')
+              .doc(orderId)
+              .get();
 
-      if (!orderDoc.exists) {
-        developer.log('Order $orderId does not exist in farmer_orders');
-        throw Exception('الطلب غير موجود');
+      if (!farmerOrderDoc.exists) {
+        throw Exception('الطلب غير موجود في طلبات المزارع');
       }
 
-      final orderData = orderDoc.data() as Map<String, dynamic>;
-      final userId = orderData['user_id'] as String?;
+      final farmerOrderData = farmerOrderDoc.data() as Map<String, dynamic>;
+      final userId = farmerOrderData['user_id'] as String?;
 
       if (userId == null) {
-        developer.log('user_id not found in order $orderId');
-        throw Exception('معرف المشتري غير متوفر');
+        throw Exception('لم يتم العثور على معرف المستخدم في الطلب');
       }
 
-      developer.log('Found user_id: $userId for order $orderId');
+      log('Found user_id: $userId for order $orderId');
 
-      // تحديث الحالة في farmer_orders
-      await FirebaseFirestore.instance
+      // إنشاء batch operation لتحديث كلا المكانين
+      final batch = _firestore.batch();
+
+      // تحديث حالة الطلب في farmer_orders
+      final farmerOrderRef = _firestore
           .collection('users')
           .doc(user.uid)
           .collection('farmer_orders')
-          .doc(orderId)
-          .update({'status': newStatus});
-      developer.log('Successfully updated status in farmer_orders for order $orderId');
+          .doc(orderId);
 
-      // تحديث الحالة في orders الخاص بالمشتري
-      await FirebaseFirestore.instance
+      batch.update(farmerOrderRef, {
+        'status': newStatus,
+        'updatedAt': FieldValue.serverTimestamp(),
+        'updatedBy': user.uid,
+      });
+
+      log('Successfully updated status in farmer_orders for order $orderId');
+
+      // تحديث حالة الطلب في orders للمستخدم
+      final userOrderRef = _firestore
           .collection('users')
           .doc(userId)
           .collection('orders')
-          .doc(orderId)
-          .update({'status': newStatus});
-      developer.log('Successfully updated status in orders for order $orderId');
+          .doc(orderId);
+
+      batch.update(userOrderRef, {
+        'status': newStatus,
+        'updatedAt': FieldValue.serverTimestamp(),
+        'updatedBy': user.uid,
+      });
+
+      log('Preparing to update user order for order $orderId');
+
+      // تنفيذ العملية
+      await batch.commit();
+
+      log('Successfully updated status in both collections for order $orderId');
     } catch (e) {
-      developer.log('Error updating order status for order $orderId: $e', error: e);
+      log('Error updating order status for order $orderId: $e');
       throw Exception('فشل تحديث حالة الطلب: $e');
     }
+  }
+
+  // الحصول على تفاصيل طلب معين
+  Future<DocumentSnapshot?> getOrderDetails(String orderId) async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) {
+        throw Exception('المستخدم غير مسجل دخول');
+      }
+
+      final doc =
+          await _firestore
+              .collection('users')
+              .doc(user.uid)
+              .collection('farmer_orders')
+              .doc(orderId)
+              .get();
+
+      return doc.exists ? doc : null;
+    } catch (e) {
+      log('Error getting order details: $e');
+      return null;
+    }
+  }
+
+  // احصائيات الطلبات
+  Future<Map<String, int>> getOrderStats() async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) {
+        throw Exception('المستخدم غير مسجل دخول');
+      }
+
+      final ordersSnapshot =
+          await _firestore
+              .collection('users')
+              .doc(user.uid)
+              .collection('farmer_orders')
+              .get();
+
+      final orders = ordersSnapshot.docs;
+
+      int pending = 0;
+      int confirmed = 0;
+      int completed = 0;
+      int cancelled = 0;
+
+      for (var order in orders) {
+        final data = order.data();
+        final status = data['status'] as String? ?? 'pending';
+
+        switch (status) {
+          case 'pending':
+            pending++;
+            break;
+          case 'confirmed':
+            confirmed++;
+            break;
+          case 'completed':
+            completed++;
+            break;
+          case 'cancelled':
+            cancelled++;
+            break;
+        }
+      }
+
+      return {
+        'total': orders.length,
+        'pending': pending,
+        'confirmed': confirmed,
+        'completed': completed,
+        'cancelled': cancelled,
+      };
+    } catch (e) {
+      log('Error getting order stats: $e');
+      return {};
+    }
+  }
+
+  // فلترة الطلبات حسب الحالة
+  Stream<QuerySnapshot> getOrdersByStatus(String status) {
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw Exception('المستخدم غير مسجل دخول');
+    }
+
+    return _firestore
+        .collection('users')
+        .doc(user.uid)
+        .collection('farmer_orders')
+        .where('status', isEqualTo: status)
+        .orderBy('timestamp', descending: true)
+        .snapshots();
+  }
+
+  // الحصول على الطلبات الجديدة (غير المؤكدة)
+  Stream<QuerySnapshot> getNewOrders() {
+    return getOrdersByStatus('pending');
+  }
+
+  // تأكيد طلب
+  Future<void> confirmOrder(String orderId) async {
+    await updateOrderStatus(orderId, 'confirmed');
+  }
+
+  // إلغاء طلب
+  Future<void> cancelOrder(String orderId) async {
+    await updateOrderStatus(orderId, 'cancelled');
+  }
+
+  // إتمام طلب
+  Future<void> completeOrder(String orderId) async {
+    await updateOrderStatus(orderId, 'completed');
   }
 }

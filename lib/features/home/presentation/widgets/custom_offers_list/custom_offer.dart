@@ -27,7 +27,6 @@ class CustomOffer extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: Container(
         width: double.infinity,
-        height: 160,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(24),
           border: Border.all(color: AppColors.lightPrimaryColor, width: 1),
@@ -100,8 +99,8 @@ class CustomOffer extends StatelessWidget {
                               offer.title,
                               style: TextStyles.semiBold13.copyWith(
                                 color: AppColors.kWiteColor,
-                                letterSpacing: 0.5,
                               ),
+                              maxLines: 1,
                             ),
                           ),
                           // Offer description
@@ -111,8 +110,7 @@ class CustomOffer extends StatelessWidget {
                               color: Colors.black87,
                               height: 1.2,
                             ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
                           ),
                           // Shop button
                           GestureDetector(

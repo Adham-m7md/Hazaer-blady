@@ -61,8 +61,8 @@ class Product extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    (product['name'] ?? 'منتج غير معروف').length > 15
-                        ? '${(product['name'] ?? 'منتج غير معروف').substring(0, 15)}...'
+                    (product['name'] ?? 'منتج غير معروف').length > 10
+                        ? '${(product['name'] ?? 'منتج غير معروف').substring(0, 10)}...'
                         : product['name'] ?? 'منتج غير معروف',
                     style: TextStyles.semiBold19,
                   ),
@@ -78,7 +78,7 @@ class Product extends StatelessWidget {
                         log('Error fetching farmer data: ${snapshot.error}');
                         return const Text(
                           'خطأ في جلب بيانات الحظيرة',
-                          style: TextStyles.semiBold16,
+                          style: TextStyles.semiBold11,
                         );
                       }
                       if (!snapshot.hasData) {
@@ -111,14 +111,20 @@ class Product extends StatelessWidget {
                       ],
                     ),
                   ),
-                  Text.rich(
-                    TextSpan(
-                      style: TextStyles.semiBold16,
-                      children: [
-                        const TextSpan(text: 'السعر للكيلو: '),
-                        TextSpan(text: '${product['price_per_kg'] ?? 0} دينار'),
-                      ],
-                    ),
+                  Row(
+                    mainAxisSize:
+                        MainAxisSize
+                            .min, // Adjusts the row size to fit its content
+                    children: [
+                      Text('السعر للكيلو: ', style: TextStyles.semiBold16),
+                      Text(
+                        _truncateText(
+                          '${product['price_per_kg'] ?? 0} دينار',
+                          4,
+                        ),
+                        style: TextStyles.semiBold16,
+                      ),
+                    ],
                   ),
                   // Fetch and display farmer's ratings
                   BlocProvider(
@@ -209,4 +215,11 @@ class RatingDisplay extends StatelessWidget {
       },
     );
   }
+}
+
+String _truncateText(String text, int maxLength) {
+  if (text.length <= maxLength) {
+    return text;
+  }
+  return '${text.substring(0, maxLength)}...';
 }

@@ -2,6 +2,7 @@ import 'dart:developer';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:hadaer_blady/core/errors/exeptions.dart';
 import 'package:hadaer_blady/core/services/shared_prefs_singleton.dart';
 
@@ -66,6 +67,24 @@ class FirebaseAuthService {
     }
   }
 
+  Future<String?> _getFCMToken() async {
+    FirebaseMessaging messaging = FirebaseMessaging.instance;
+
+    // طلب إذن بالإشعارات (مطلوب في iOS و Android 13+)
+    NotificationSettings settings = await messaging.requestPermission();
+
+    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+      // الحصول على التوكن
+      String? token = await messaging.getToken();
+      print("FCM Token: $token");
+      return token;
+      // ممكن تخزن التوكن في Firebase Firestore أو Realtime DB حسب احتياجك
+    } else {
+      print('لم يتم السماح بالإشعارات');
+      throw 'لم يتم السماح بالإشعارات';
+    }
+  }
+
   // Create a new user
   Future<User> createUserWithEmailAndPassword({
     required String email,
@@ -117,6 +136,7 @@ class FirebaseAuthService {
           'offers': offers ?? 0,
           'created_at': FieldValue.serverTimestamp(),
           'email_verified': false,
+          'fcm_token': await _getFCMToken(),
         });
 
         // Removed location saving logic
@@ -207,7 +227,7 @@ class FirebaseAuthService {
       } else {
         user = await _signInWithPhone(cleanInput, password);
       }
-
+      
       // التحقق من تأكيد البريد الإلكتروني
       await user.reload();
       if (!user.emailVerified) {
@@ -229,35 +249,59 @@ class FirebaseAuthService {
   }
 
   // Sign in with email
-  Future<User> _signInWithEmail(String email, String password) async {
-    final credential = await auth.signInWithEmailAndPassword(
-      email: email,
-      password: password,
-    );
+Future<User> _signInWithEmail(String email, String password) async {
+  final credential = await auth.signInWithEmailAndPassword(
+    email: email,
+    password: password,
+  );
 
-    final user = credential.user!;
-    final userDoc = await firestore.collection('users').doc(user.uid).get();
-    final userData = userDoc.data() ?? {};
-    final userName = userData['name'] as String? ?? 'User';
-    final userEmail = userData['email'] as String? ?? email;
-    final userPhone = userData['phone'] as String? ?? '';
-    final userAddress = userData['address'] as String? ?? '';
-    final userCity = userData['city'] as String? ?? '';
-    final userProfileImageUrl = userData['profile_image_url'] as String? ?? '';
-    final userJobTitle = userData['job_title'] as String? ?? '';
+  final user = credential.user!;
+  final userDoc = await firestore.collection('users').doc(user.uid).get();
+  final userData = userDoc.data() ?? {};
+  final userName = userData['name'] as String? ?? 'User';
+  final userEmail = userData['email'] as String? ?? email;
+  final userPhone = userData['phone'] as String? ?? '';
+  final userAddress = userData['address'] as String? ?? '';
+  final userCity = userData['city'] as String? ?? '';
+  final userProfileImageUrl = userData['profile_image_url'] as String? ?? '';
+  final userJobTitle = userData['job_title'] as String? ?? '';
 
-    await _saveUserToPrefs(
-      name: userName,
-      email: userEmail,
-      phone: userPhone,
-      address: userAddress,
-      city: userCity,
-      profileImageUrl: userProfileImageUrl,
-      jobTitle: userJobTitle,
-    );
-    log('Sign in successful with email');
-    return user;
+  await _saveUserToPrefs(
+    name: userName,
+    email: userEmail,
+    phone: userPhone,
+    address: userAddress,
+    city: userCity,
+    profileImageUrl: userProfileImageUrl,
+    jobTitle: userJobTitle,
+  );
+
+  // ✅ تحديث FCM token يدويًا مباشرة بعد تسجيل الدخول
+  try {
+    final token = await FirebaseMessaging.instance.getToken();
+    if (token != null) {
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
+        'fcmToken': token,
+      });
+      log('✅ FCM token updated manually: $token');
+    } else {
+      log('⚠️ Failed to get FCM token.');
+    }
+  } catch (e) {
+    log('❌ Error updating FCM token: $e');
   }
+
+  // ✅ إضافة مستمع للتحديث المستقبلي
+  FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
+    await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
+      'fcmToken': newToken,
+    });
+    log('🔄 FCM token refreshed: $newToken');
+  });
+
+  log('✅ Sign in successful with email');
+  return user;
+}
 
   // Sign in with phone
   Future<User> _signInWithPhone(String phone, String password) async {
@@ -294,6 +338,27 @@ class FirebaseAuthService {
       profileImageUrl: userProfileImageUrl,
       jobTitle: userJobTitle,
     );
+     try {
+    final token = await FirebaseMessaging.instance.getToken();
+    if (token != null) {
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
+        'fcmToken': token,
+      });
+      log('✅ FCM token updated manually: $token');
+    } else {
+      log('⚠️ Failed to get FCM token.');
+    }
+  } catch (e) {
+    log('❌ Error updating FCM token: $e');
+  }
+
+  // ✅ إضافة مستمع للتحديث المستقبلي
+  FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
+    await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
+      'fcmToken': newToken,
+    });
+    log('🔄 FCM token refreshed: $newToken');
+  });
     log('User found with email: $userEmail');
     return user;
   }
@@ -513,5 +578,19 @@ class FirebaseAuthService {
       log('Unexpected error in deleteUserAccount: $e');
       throw CustomException(message: 'حدث خطأ ما، الرجاء المحاولة مرة أخرى');
     }
+  }
+
+  _listenToFCMTokenRefresh() {
+    FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
+      final userId = FirebaseAuth.instance.currentUser?.uid;
+      if (userId != null) {
+        await FirebaseFirestore.instance.collection('users').doc(userId).update(
+          {'fcm_token': newToken},
+        );
+        log('FCM token updated: $newToken');
+      } else {
+        print('No user logged in to update FCM token.');
+      }
+    });
   }
 }

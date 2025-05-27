@@ -49,7 +49,7 @@ class BottomNavBar extends StatelessWidget {
                 final isSelected = currentIndex == index;
 
                 return Expanded(
-                  flex: isSelected ? (isFarmer ? 5 : 3) : 2,
+                  flex: isSelected ? (isFarmer ? 5 : 4) : 2,
                   child: GestureDetector(
                     behavior: HitTestBehavior.opaque,
                     onTap: () {

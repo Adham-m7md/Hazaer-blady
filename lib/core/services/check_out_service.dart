@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 class CheckoutService {
   Future<String> submitOrder({
@@ -46,6 +47,9 @@ class CheckoutService {
         }
       }
 
+      // التأكد من حفظ FCM token للمستخدم الحالي
+      await _ensureUserFCMToken(user.uid);
+
       // إعداد بيانات الطلب
       final orderData = {
         'userData': userData,
@@ -54,6 +58,7 @@ class CheckoutService {
         'user_id': user.uid, // إضافة معرف المشتري
         'timestamp': FieldValue.serverTimestamp(),
         'status': 'pending',
+        'created_at': DateTime.now().toIso8601String(), // لتسهيل الترتيب
       };
 
       // كتابة الطلب إلى Firestore (للمستخدم)
@@ -79,12 +84,164 @@ class CheckoutService {
             onTimeout: () => throw Exception('انتهت مهلة إنشاء الطلب'),
           );
 
+      // التأكد من حفظ FCM token للمزارع (لإرسال الإشعارات)
+      await _ensureUserFCMToken(farmerId);
+
+      print('✅ Order created successfully: ${orderRef.id}');
+      
       // إرجاع رقم الطلب
       return orderRef.id;
     } catch (e, stackTrace) {
       print('Error in submitOrder: $e');
       print('StackTrace: $stackTrace');
       throw Exception('فشل إنشاء الطلب: $e');
+    }
+  }
+
+  // دالة للتأكد من حفظ FCM token للمستخدم
+  Future<void> _ensureUserFCMToken(String userId) async {
+    try {
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .get();
+
+      if (userDoc.exists) {
+        final userData = userDoc.data();
+        final existingToken = userData?['fcmToken'];
+        
+        // الحصول على FCM token الحالي
+        final currentToken = await FirebaseMessaging.instance.getToken();
+        
+        // تحديث التوكن إذا كان مختلفاً أو غير موجود
+        if (currentToken != null && currentToken != existingToken) {
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(userId)
+              .update({
+                'fcmToken': currentToken,
+                'fcmTokenUpdatedAt': FieldValue.serverTimestamp(),
+              });
+          
+          print('FCM Token updated for user: $userId');
+        }
+      }
+            } catch (e) {
+      print('Error updating FCM token for user $userId: $e');
+      // لا نرمي خطأ هنا لأن عدم تحديث التوكن لا يجب أن يوقف عملية إنشاء الطلب
+    }
+  }
+
+  // دالة لتحديث حالة الطلب
+  Future<void> updateOrderStatus({
+    required String orderId,
+    required String userId,
+    required String farmerId,
+    required String newStatus,
+  }) async {
+    try {
+      final batch = FirebaseFirestore.instance.batch();
+
+      // تحديث الطلب في مجموعة المستخدم
+      final userOrderRef = FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('orders')
+          .doc(orderId);
+
+      // تحديث الطلب في مجموعة المزارع
+      final farmerOrderRef = FirebaseFirestore.instance
+          .collection('users')
+          .doc(farmerId)
+          .collection('farmer_orders')
+          .doc(orderId);
+
+      batch.update(userOrderRef, {
+        'status': newStatus,
+        'statusUpdatedAt': FieldValue.serverTimestamp(),
+      });
+
+      batch.update(farmerOrderRef, {
+        'status': newStatus,
+        'statusUpdatedAt': FieldValue.serverTimestamp(),
+      });
+
+      await batch.commit();
+      
+      print('✅ Order status updated: $orderId -> $newStatus');
+    } catch (e) {
+      print('Error updating order status: $e');
+      throw Exception('فشل تحديث حالة الطلب: $e');
+    }
+  }
+
+  // دالة للحصول على تفاصيل الطلب
+  Future<Map<String, dynamic>?> getOrderDetails({
+    required String orderId,
+    required String userId,
+  }) async {
+    try {
+      final orderDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('orders')
+          .doc(orderId)
+          .get();
+
+      if (orderDoc.exists) {
+        return orderDoc.data();
+      }
+      return null;
+    } catch (e) {
+      print('Error getting order details: $e');
+      return null;
+    }
+  }
+
+  // دالة للحصول على جميع طلبات المستخدم
+  Stream<QuerySnapshot> getUserOrders(String userId) {
+    return FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId)
+        .collection('orders')
+        .orderBy('timestamp', descending: true)
+        .snapshots();
+  }
+
+  // دالة للحصول على عدد الطلبات غير المقروءة للمزارع
+  Future<int> getUnreadOrdersCount(String farmerId) async {
+    try {
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(farmerId)
+          .collection('farmer_orders')
+          .where('status', isEqualTo: 'pending')
+          .get();
+
+      return querySnapshot.docs.length;
+    } catch (e) {
+      print('Error getting unread orders count: $e');
+      return 0;
+    }
+  }
+
+  // دالة لتحديث حالة قراءة الطلب
+  Future<void> markOrderAsRead({
+    required String orderId,
+    required String farmerId,
+  }) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(farmerId)
+          .collection('farmer_orders')
+          .doc(orderId)
+          .update({
+            'isRead': true,
+            'readAt': FieldValue.serverTimestamp(),
+          });
+    } catch (e) {
+      print('Error marking order as read: $e');
     }
   }
 }
