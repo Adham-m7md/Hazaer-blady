@@ -6,6 +6,8 @@ if (!admin.apps.length) {
   admin.initializeApp();
 }
 
+const ADMIN_EMAIL = 'ahmed.roma22@gmail.com';
+
 // إشعار العروض الجديدة
 exports.sendOfferNotification = onDocumentCreated(
   'offers/{offerId}',
@@ -43,10 +45,23 @@ exports.sendOfferNotification = onDocumentCreated(
     };
 
     try {
-      await admin.firestore()
-        .collection('notifications')
-        .doc(productId)
-        .set({
+      // إرسال الإشعار للعامة
+      const resp = await admin.messaging().send(message);
+      console.log('✅ Offer notification sent:', resp);
+
+      // حفظ الإشعار لجميع المستخدمين في sub-collections
+      const usersSnapshot = await admin.firestore().collection('users').get();
+      
+      const batch = admin.firestore().batch();
+      
+      usersSnapshot.docs.forEach(userDoc => {
+        const notificationRef = admin.firestore()
+          .collection('users')
+          .doc(userDoc.id)
+          .collection('notifications')
+          .doc(productId);
+        
+        batch.set(notificationRef, {
           productId,
           title,
           description,
@@ -55,9 +70,11 @@ exports.sendOfferNotification = onDocumentCreated(
           createdAt: admin.firestore.FieldValue.serverTimestamp(),
           type: 'offer',
         });
+      });
 
-      const resp = await admin.messaging().send(message);
-      console.log('✅ Offer notification sent:', resp);
+      await batch.commit();
+      console.log('✅ Offer notifications saved to all users sub-collections');
+
     } catch (err) {
       console.error('❌ Error sending offer notification:', err);
     }
@@ -89,6 +106,8 @@ exports.sendFarmerOrderNotification = onDocumentCreated(
       const buyerName = userData.name || 'مشتري';
       const buyerPhone = userData.phone || '';
       const itemCount = cartItems.length;
+      const isCustomProductOrder = orderData?.is_custom_product_order || false;
+      const isAdminNotification = orderData?.admin_notification || false;
       
       // حساب المجموع الكلي
       const totalPrice = cartItems.reduce((sum, item) => {
@@ -114,10 +133,16 @@ exports.sendFarmerOrderNotification = onDocumentCreated(
         return;
       }
 
-      // إعداد رسالة الإشعار
-      const notificationTitle = 'طلب جديد وارد!';
-      const notificationBody = `طلب جديد من ${buyerName} - ${itemCount} منتج بقيمة ${totalPrice} دينار`;
-console.log(`📲 FCM token to notify: ${fcmToken}`);
+      // تخصيص رسالة الإشعار حسب نوع الطلب
+      let notificationTitle = 'طلب جديد وارد!';
+      let notificationBody = `طلب جديد من ${buyerName} - ${itemCount} منتج بقيمة ${totalPrice} دينار`;
+      
+      if (isCustomProductOrder && isAdminNotification) {
+        notificationTitle = 'طلب منتج مخصص جديد!';
+        notificationBody = `طلب منتج مخصص من ${buyerName} - ${itemCount} منتج بقيمة ${totalPrice} دينار`;
+      }
+
+      console.log(`📲 FCM token to notify: ${fcmToken}`);
 
       const message = {
         token: fcmToken,
@@ -132,15 +157,16 @@ console.log(`📲 FCM token to notify: ${fcmToken}`);
           buyerPhone: buyerPhone,
           itemCount: itemCount.toString(),
           totalPrice: totalPrice.toString(),
+          isCustomProductOrder: isCustomProductOrder.toString(),
           click_action: 'FLUTTER_NOTIFICATION_CLICK',
-          type: 'farmer_order',
+          type: isCustomProductOrder && isAdminNotification ? 'admin_custom_order' : 'farmer_order',
           screen: 'farmer_orders',
         },
         android: {
           priority: 'HIGH',
           notification: {
             icon: '@mipmap/ic_launcher',
-            color: '#2196F3',
+            color: isCustomProductOrder && isAdminNotification ? '#FF6B35' : '#2196F3', // لون مختلف للطلبات المخصصة
             sound: 'default',
             channelId: 'farmer_orders_channel',
           },
@@ -166,7 +192,7 @@ console.log(`📲 FCM token to notify: ${fcmToken}`);
       const response = await admin.messaging().send(message);
       console.log('✅ Farmer order notification sent:', response);
 
-      // حفظ الإشعار في قاعدة البيانات للمزارع
+      // حفظ الإشعار في sub-collection للمزارع/الأدمن
       await admin.firestore()
         .collection('users')
         .doc(farmerId)
@@ -181,18 +207,92 @@ console.log(`📲 FCM token to notify: ${fcmToken}`);
           itemCount: itemCount,
           totalPrice: totalPrice,
           isRead: false,
-          type: 'farmer_order',
+          type: isCustomProductOrder && isAdminNotification ? 'admin_custom_order' : 'farmer_order',
+          isCustomProductOrder: isCustomProductOrder,
           createdAt: admin.firestore.FieldValue.serverTimestamp(),
         });
 
-      console.log('✅ Farmer order notification saved to database');
+      console.log(`✅ ${isCustomProductOrder && isAdminNotification ? 'Admin custom product' : 'Farmer'} order notification saved to sub-collection`);
+
+      // إذا كان هذا طلب منتج مخصص، تأكد من إرسال إشعار للأدمن أيضاً
+      if (isCustomProductOrder && !isAdminNotification) {
+        await sendNotificationToAdmin(orderId, orderData);
+      }
 
     } catch (error) {
-      
       console.error('❌ Error sending farmer order notification:', error);
     }
 
     return null;
   }
-
 );
+
+// دالة مساعدة لإرسال إشعار للأدمن
+async function sendNotificationToAdmin(orderId, orderData) {
+  try {
+    // البحث عن الأدمن
+    const adminQuery = await admin.firestore()
+      .collection('users')
+      .where('email', '==', ADMIN_EMAIL)
+      .limit(1)
+      .get();
+
+    if (adminQuery.empty) {
+      console.log('Admin not found');
+      return;
+    }
+
+    const adminDoc = adminQuery.docs[0];
+    const adminId = adminDoc.id;
+    const adminData = adminDoc.data();
+    const adminFcmToken = adminData?.fcmToken;
+
+    if (!adminFcmToken) {
+      console.log('No FCM token found for admin');
+      return;
+    }
+
+    // إعداد رسالة الإشعار للأدمن
+    const userData = orderData?.userData || {};
+    const cartItems = orderData?.cartItems || [];
+    const buyerName = userData.name || 'مشتري';
+    const itemCount = cartItems.length;
+    const totalPrice = cartItems.reduce((sum, item) => {
+      return sum + (item.totalPrice || 0);
+    }, 0);
+
+    const adminMessage = {
+      token: adminFcmToken,
+      notification: {
+        title: 'طلب منتج مخصص جديد!',
+        body: `طلب منتج مخصص من ${buyerName} - ${itemCount} منتج بقيمة ${totalPrice} دينار`,
+      },
+      data: {
+        orderId: orderId,
+        buyerName: buyerName,
+        itemCount: itemCount.toString(),
+        totalPrice: totalPrice.toString(),
+        isCustomProductOrder: 'true',
+        click_action: 'FLUTTER_NOTIFICATION_CLICK',
+        type: 'admin_custom_order',
+        screen: 'farmer_orders',
+      },
+      android: {
+        priority: 'HIGH',
+        notification: {
+          icon: '@mipmap/ic_launcher',
+          color: '#FF6B35', // لون برتقالي للطلبات المخصصة
+          sound: 'default',
+          channelId: 'admin_orders_channel',
+        },
+      },
+    };
+
+    // إرسال الإشعار للأدمن
+    const adminResponse = await admin.messaging().send(adminMessage);
+    console.log('✅ Admin notification sent for custom product order:', adminResponse);
+
+  } catch (error) {
+    console.error('❌ Error sending admin notification:', error);
+  }
+}

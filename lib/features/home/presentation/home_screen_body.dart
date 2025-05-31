@@ -1,14 +1,19 @@
 import 'dart:developer';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hadaer_blady/core/constants.dart';
 import 'package:hadaer_blady/core/services/custom_product_servise.dart';
+import 'package:hadaer_blady/core/services/firebase_auth_service.dart';
+import 'package:hadaer_blady/core/services/get_it.dart';
 import 'package:hadaer_blady/core/utils/app_colors.dart';
 import 'package:hadaer_blady/core/utils/app_text_styles.dart';
 import 'package:hadaer_blady/core/widgets/custom_loading_indicator.dart';
 import 'package:hadaer_blady/features/home/presentation/widgets/custom_offers_list/offer_carousel.dart';
 import 'package:hadaer_blady/features/home/presentation/widgets/product_section_home_body.dart';
 import 'package:hadaer_blady/features/home/presentation/widgets/user_name_widget.dart';
+import 'package:hadaer_blady/features/notfications/cubit/notfications_cubit.dart';
 import 'package:hadaer_blady/features/notfications/notfications_screen.dart';
 
 class HomeScreenBody extends StatefulWidget {
@@ -37,7 +42,10 @@ class _HomeScreenBodyState extends State<HomeScreenBody> {
           spacing: 8,
           children: [
             // Header Section
-            _buildHeaderSection(),
+            BlocProvider(
+              create: (context) => NotificationsCubit(),
+              child: _buildHeaderSection(),
+            ),
 
             Expanded(
               child: RefreshIndicator(
@@ -85,29 +93,58 @@ class _HomeScreenBodyState extends State<HomeScreenBody> {
   }
 
   Widget _buildNotificationButton() {
-    return Stack(
-      children: [
-        Positioned(
-          child: CircleAvatar(
-            backgroundColor: AppColors.lightPrimaryColor.withAlpha(40),
-            child: IconButton(
-              onPressed: () {
-                Navigator.pushNamed(context, NotificationsScreen.id);
-              },
-              icon: const Icon(
-                Icons.notifications_active,
-                color: AppColors.lightPrimaryColor,
+    final firebaseAuth = getIt<FirebaseAuthService>();
+    final auth = getIt<FirebaseAuthService>();
+
+    return StreamBuilder<QuerySnapshot>(
+      stream:
+          firebaseAuth.firestore
+              .collection('users')
+              .doc(auth.auth.currentUser!.uid)
+              .collection('notifications')
+              .where('isRead', isEqualTo: false)
+              .snapshots(),
+      builder: (context, snapshot) {
+        int unreadCount = 0;
+
+        if (snapshot.hasData && snapshot.data!.docs.isNotEmpty) {
+          unreadCount = snapshot.data!.docs.length;
+        }
+        return Stack(
+          children: [
+            Positioned(
+              child: CircleAvatar(
+                backgroundColor: AppColors.lightPrimaryColor.withAlpha(40),
+                child: IconButton(
+                  onPressed: () {
+                    Navigator.pushNamed(context, NotificationsScreen.id);
+                  },
+                  icon: const Icon(
+                    Icons.notifications_active,
+                    color: AppColors.lightPrimaryColor,
+                  ),
+                ),
               ),
             ),
-          ),
-        ),
-        const Positioned(
-          top: 4,
-          right: 0,
-          left: 0,
-          child: CircleAvatar(backgroundColor: AppColors.kRedColor, radius: 3),
-        ),
-      ],
+            if (unreadCount > 0)
+              Positioned(
+                top: 0,
+                right: 0,
+                left: 26,
+                child: CircleAvatar(
+                  backgroundColor: AppColors.kRedColor,
+                  radius: 8,
+                  child: Text(
+                    unreadCount > 99 ? '99+' : unreadCount.toString(),
+                    style: TextStyles.semiBold11.copyWith(
+                      color: AppColors.kWiteColor,
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
 

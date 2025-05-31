@@ -50,24 +50,13 @@ class CustomProductService {
 
       log('Offer added successfully with ID: ${offerRef.id}');
       try {
-        /*  final notificationService = getIt<NotificationService>();
-        await notificationService.sendOfferNotification(
+        // إرسال الإشعار لجميع المستخدمين
+        await _sendNotificationToAllUsers(
           productId: offerRef.id,
           title: title,
           description: description,
           price: price,
-        ); */
-
-        /*     final callable = FirebaseFunctions.instance.httpsCallable(
-          'sendOfferNotification',
         );
-       await callable.call({
-  'productId': offerRef.id,
-  'title': title,
-  'description': description,
-  'price': price.toString(),
-});
- */
       } catch (e) {
         log('Error sending notification: $e');
       }
@@ -229,26 +218,9 @@ class CustomProductService {
         }
       }
 
-      // Delete related notifications from the notifications collection
+      // Delete related notifications from all users' subcollections
       try {
-        final notificationsQuerySnapshot =
-            await _firestore
-                .collection('notifications')
-                .where('productId', isEqualTo: productId)
-                .get();
-
-        final batch = _firestore.batch();
-
-        // Add all notification deletions to batch
-        for (final doc in notificationsQuerySnapshot.docs) {
-          batch.delete(doc.reference);
-        }
-
-        // Execute the batch
-        await batch.commit();
-        log(
-          'Deleted ${notificationsQuerySnapshot.docs.length} related notifications for product: $productId',
-        );
+        await _deleteNotificationsFromAllUsers(productId);
       } catch (e) {
         log('Error deleting related notifications: $e');
         // Continue with product deletion even if notification deletion fails
@@ -285,6 +257,103 @@ class CustomProductService {
     } catch (e) {
       log('Unexpected error: $e');
       throw CustomException(message: 'Unexpected error retrieving farmer data');
+    }
+  }
+
+  /// إرسال إشعار لجميع المستخدمين عند إضافة منتج جديد
+  Future<void> _sendNotificationToAllUsers({
+    required String productId,
+    required String title,
+    required String description,
+    required double price,
+  }) async {
+    try {
+      // جلب جميع المستخدمين
+      final usersSnapshot = await _firestore.collection('users').get();
+
+      final batch = _firestore.batch();
+      int batchCount = 0;
+
+      for (final userDoc in usersSnapshot.docs) {
+        // إنشاء إشعار في subcollection للمستخدم
+        final notificationRef =
+            _firestore
+                .collection('users')
+                .doc(userDoc.id)
+                .collection('notifications')
+                .doc();
+
+        batch.set(notificationRef, {
+          'productId': productId,
+          'title': title,
+          'description': description,
+          'price': price,
+          'type': 'new_product',
+          'isRead': false,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+
+        batchCount++;
+
+        // تنفيذ الـ batch كل 500 عملية (حد Firestore)
+        if (batchCount == 500) {
+          await batch.commit();
+          batchCount = 0;
+        }
+      }
+
+      // تنفيذ باقي العمليات
+      if (batchCount > 0) {
+        await batch.commit();
+      }
+
+      log(
+        'Notifications sent to ${usersSnapshot.docs.length} users for product: $productId',
+      );
+    } catch (e) {
+      log('Error sending notifications to users: $e');
+      rethrow;
+    }
+  }
+
+  /// حذف الإشعارات المرتبطة بمنتج معين من جميع المستخدمين
+  Future<void> _deleteNotificationsFromAllUsers(String productId) async {
+    try {
+      // جلب جميع المستخدمين
+      final usersSnapshot = await _firestore.collection('users').get();
+
+      int totalDeletedNotifications = 0;
+
+      for (final userDoc in usersSnapshot.docs) {
+        // البحث عن الإشعارات المرتبطة بالمنتج في subcollection المستخدم
+        final notificationsSnapshot =
+            await _firestore
+                .collection('users')
+                .doc(userDoc.id)
+                .collection('notifications')
+                .where('productId', isEqualTo: productId)
+                .get();
+
+        if (notificationsSnapshot.docs.isNotEmpty) {
+          final batch = _firestore.batch();
+
+          // إضافة عمليات الحذف للـ batch
+          for (final notificationDoc in notificationsSnapshot.docs) {
+            batch.delete(notificationDoc.reference);
+          }
+
+          // تنفيذ الـ batch
+          await batch.commit();
+          totalDeletedNotifications += notificationsSnapshot.docs.length;
+        }
+      }
+
+      log(
+        'Deleted $totalDeletedNotifications notifications for product: $productId',
+      );
+    } catch (e) {
+      log('Error deleting notifications from users: $e');
+      rethrow;
     }
   }
 

@@ -453,7 +453,7 @@ class EnhancedUserDeletionService {
   Future<void> _deleteUserPersonalData(String userId, String? userEmail) async {
     log('بدء حذف البيانات الشخصية: $userId');
 
-    final collections = ['notifications', 'offers', 'products', 'users'];
+    final collections = [ 'offers', 'products', 'users'];
 
     final deleteTasks = <Future<void>>[];
 

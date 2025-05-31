@@ -100,7 +100,7 @@ class _OffersCarouselState extends State<OffersCarousel>
   void _startTimer(int itemCount) {
     _timer?.cancel();
     if (itemCount > 0) {
-      _timer = Timer.periodic(const Duration(seconds: 3), (Timer timer) {
+      _timer = Timer.periodic(const Duration(seconds: 5), (Timer timer) {
         if (_pageController.hasClients && mounted) {
           int nextPage = (_currentPage + 1) % itemCount;
           _pageController.animateToPage(
