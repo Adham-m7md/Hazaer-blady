@@ -8,6 +8,7 @@ import 'package:hadaer_blady/core/constants.dart';
 import 'package:hadaer_blady/core/functions/build_app_bar_with_arrow_back_button.dart';
 import 'package:hadaer_blady/core/utils/app_colors.dart';
 import 'package:hadaer_blady/core/utils/app_text_styles.dart';
+import 'package:hadaer_blady/features/farmer_request_orders/presentation/farmer_request_orders_screen.dart';
 import 'package:hadaer_blady/features/notfications/cubit/notfications_cubit.dart';
 import 'package:hadaer_blady/features/notfications/cubit/notfications_state.dart';
 
@@ -38,7 +39,7 @@ class NotficationsScreenBody extends StatelessWidget {
   Widget build(BuildContext context) {
     // التحقق من وجود مستخدم مسجل
     final user = FirebaseAuth.instance.currentUser;
-    
+
     if (user == null) {
       return const Center(
         child: Column(
@@ -52,10 +53,7 @@ class NotficationsScreenBody extends StatelessWidget {
             SizedBox(height: 16),
             Text(
               'يجب تسجيل الدخول لرؤية الإشعارات',
-              style: TextStyle(
-                fontSize: 16,
-                color: AppColors.kGrayColor,
-              ),
+              style: TextStyle(fontSize: 16, color: AppColors.kGrayColor),
             ),
           ],
         ),
@@ -68,12 +66,13 @@ class NotficationsScreenBody extends StatelessWidget {
         Expanded(
           child: StreamBuilder<QuerySnapshot>(
             // استدعاء الإشعارات من subcollection الخاص بالمستخدم
-            stream: FirebaseFirestore.instance
-                .collection('users')
-                .doc(user.uid)
-                .collection('notifications')
-                .orderBy('createdAt', descending: true)
-                .snapshots(),
+            stream:
+                FirebaseFirestore.instance
+                    .collection('users')
+                    .doc(user.uid)
+                    .collection('notifications')
+                    .orderBy('createdAt', descending: true)
+                    .snapshots(),
             builder: (context, snapshot) {
               // Loading state
               if (snapshot.connectionState == ConnectionState.waiting &&
@@ -117,9 +116,9 @@ class NotficationsScreenBody extends StatelessWidget {
                       ElevatedButton(
                         onPressed: () {
                           // إعادة تحميل الصفحة
-                          Navigator.of(context).pushReplacementNamed(
-                            NotificationsScreen.id,
-                          );
+                          Navigator.of(
+                            context,
+                          ).pushReplacementNamed(NotificationsScreen.id);
                         },
                         child: const Text('إعادة المحاولة'),
                       ),
@@ -159,7 +158,9 @@ class NotficationsScreenBody extends StatelessWidget {
               }
 
               final notifications = snapshot.data!.docs;
-              log('Loaded ${notifications.length} notifications for user: ${user.uid}');
+              log(
+                'Loaded ${notifications.length} notifications for user: ${user.uid}',
+              );
 
               return RefreshIndicator(
                 onRefresh: () async {
@@ -175,7 +176,8 @@ class NotficationsScreenBody extends StatelessWidget {
                     vertical: 8,
                   ),
                   itemCount: notifications.length,
-                  separatorBuilder: (context, index) => const SizedBox(height: 8),
+                  separatorBuilder:
+                      (context, index) => const SizedBox(height: 8),
                   itemBuilder: (context, index) {
                     final doc = notifications[index];
                     final data = doc.data() as Map<String, dynamic>;
@@ -234,20 +236,24 @@ class _NotificationsHeader extends StatelessWidget {
 
   Widget _buildDeleteAllButton(BuildContext context, NotificationsState state) {
     return GestureDetector(
-      onTap: state.isLoading || !state.hasNotifications
-          ? null
-          : () async {
-              final shouldDelete = await _showDeleteConfirmationDialog(context);
-              if (shouldDelete == true && context.mounted) {
-                context.read<NotificationsCubit>().deleteAllNotifications();
-              }
-            },
+      onTap:
+          state.isLoading || !state.hasNotifications
+              ? null
+              : () async {
+                final shouldDelete = await _showDeleteConfirmationDialog(
+                  context,
+                );
+                if (shouldDelete == true && context.mounted) {
+                  context.read<NotificationsCubit>().deleteAllNotifications();
+                }
+              },
       child: Text(
         'حذف الكل',
         style: TextStyles.semiBold16.copyWith(
-          color: state.isLoading || !state.hasNotifications
-              ? AppColors.kGrayColor
-              : Colors.red,
+          color:
+              state.isLoading || !state.hasNotifications
+                  ? AppColors.kGrayColor
+                  : Colors.red,
         ),
       ),
     );
@@ -269,15 +275,17 @@ class _NotificationsHeader extends StatelessWidget {
     }
 
     return GestureDetector(
-      onTap: state.hasUnreadNotifications
-          ? () => context.read<NotificationsCubit>().markAllAsRead()
-          : null,
+      onTap:
+          state.hasUnreadNotifications
+              ? () => context.read<NotificationsCubit>().markAllAsRead()
+              : null,
       child: Text(
         state.hasUnreadNotifications ? 'تحديد الكل كمقروء' : 'الكل مقروء',
         style: TextStyles.semiBold16.copyWith(
-          color: state.hasUnreadNotifications
-              ? AppColors.kprimaryColor
-              : AppColors.kGrayColor,
+          color:
+              state.hasUnreadNotifications
+                  ? AppColors.kprimaryColor
+                  : AppColors.kGrayColor,
         ),
       ),
     );
@@ -341,12 +349,13 @@ class NotificationItem extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(16.0),
           decoration: BoxDecoration(
-            border: isRead
-                ? Border.all(
-                    color: AppColors.kFillGrayColor.withOpacity(0.5),
-                    width: 1,
-                  )
-                : null,
+            border:
+                isRead
+                    ? Border.all(
+                      color: AppColors.kFillGrayColor.withOpacity(0.5),
+                      width: 1,
+                    )
+                    : null,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Row(
@@ -447,9 +456,7 @@ class NotificationItem extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             description,
-            style: TextStyles.semiBold13.copyWith(
-              color: AppColors.kGrayColor,
-            ),
+            style: TextStyles.semiBold13.copyWith(color: AppColors.kGrayColor),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
@@ -480,20 +487,154 @@ class NotificationItem extends StatelessWidget {
     );
   }
 
-  void _onNotificationTap(BuildContext context) {
-    // تحديد الإشعار كمقروء
-    _markAsRead();
+void _onNotificationTap(BuildContext context) {
+  log('=== Notification Tap Debug ===');
+  log('Notification ID: $notificationId');
+  log('Notification Data: $data');
+  log('User ID: $userId');
+  
+  // تحديد الإشعار كمقروء
+  _markAsRead();
+
+  // التحقق من نوع الإشعار والتنقل المناسب
+  final notificationType = data['type'] ?? 'new_product';
+  log('Notification Type: $notificationType');
+
+  switch (notificationType) {
+    case 'new_order':
+    case 'order_update':
+    case 'incoming_order':
+      log('Attempting to navigate to FarmerRequestOrdersScreen');
+      log('FarmerRequestOrdersScreen.id = ${FarmerRequestOrdersScreen.id}');
+      
+      // التحقق من وجود الكونتكست
+      if (!context.mounted) {
+        log('Context is not mounted, cannot navigate');
+        return;
+      }
+      
+      _navigateToOrdersScreenWithDebug(context);
+      break;
+
+    case 'new_product':
+    case 'product_update':
+      log('Attempting to navigate to product screen');
+      final productId = data['productId'] ?? '';
+      log('Product ID: $productId');
+      
+      if (productId.isNotEmpty) {
+        try {
+          context.read<NotificationsCubit>().onNotificationTap(
+            context,
+            notificationId,
+            productId,
+          );
+          log('Successfully called NotificationsCubit.onNotificationTap');
+        } catch (e) {
+          log('Error calling NotificationsCubit.onNotificationTap: $e');
+        }
+      } else {
+        log('Product ID is empty, cannot navigate');
+      }
+      break;
+
+    case 'general':
+    default:
+      log('General notification type');
+      final productId = data['productId'] ?? '';
+      if (productId.isNotEmpty) {
+        context.read<NotificationsCubit>().onNotificationTap(
+          context,
+          notificationId,
+          productId,
+        );
+      } else {
+        log('No specific action for general notification without productId');
+      }
+      break;
+  }
+  log('=== End Notification Tap Debug ===');
+}
+
+void _navigateToOrdersScreenWithDebug(BuildContext context) async {
+  log('=== Navigation Debug ===');
+  
+  try {
+    // التحقق من وجود الـ Navigator
+    final navigator = Navigator.of(context);
+    log('Navigator obtained successfully');
+
+    // التحقق من وجود الـ route في الـ routes table
+    final routes = ModalRoute.of(context)?.settings.name;
+    log('Current route: $routes');
+
+    // محاولة التنقل باستخدام pushNamed
+    log('Attempting pushNamed with route: ${FarmerRequestOrdersScreen.id}');
     
-    // التنقل إلى المنتج أو الصفحة المناسبة
-    final productId = data['productId'] ?? '';
-    if (productId.isNotEmpty) {
-      context.read<NotificationsCubit>().onNotificationTap(
+    await navigator.pushNamed(FarmerRequestOrdersScreen.id).then((result) {
+      log('pushNamed completed successfully with result: $result');
+    }).catchError((error) {
+      log('pushNamed failed with error: $error');
+      throw error;
+    });
+    
+  } catch (e) {
+    log('pushNamed failed, attempting direct push: $e');
+    
+    try {
+      // إذا فشل pushNamed، استخدم push مباشرة
+      log('Attempting direct push to FarmerRequestOrdersScreen');
+      
+      final result = await Navigator.push(
         context,
-        notificationId,
-        productId,
+        MaterialPageRoute(
+          builder: (context) {
+            log('Building FarmerRequestOrdersScreen');
+            return const FarmerRequestOrdersScreen();
+          },
+          settings: const RouteSettings(name: 'FarmerRequestOrdersScreen'),
+        ),
       );
+      
+      log('Direct push completed successfully with result: $result');
+      
+    } catch (pushError) {
+      log('Direct push also failed: $pushError');
+      
+      // إظهار رسالة خطأ للمستخدم
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('حدث خطأ في فتح صفحة الطلبات: $pushError'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+        log('Error snackbar shown to user');
+      }
     }
   }
+  
+  log('=== End Navigation Debug ===');
+}
+
+// دالة إضافية للتحقق من حالة الـ routes
+void _debugRoutes(BuildContext context) {
+  try {
+    final navigator = Navigator.of(context);
+    log('Navigator state: ${navigator.toString()}');
+    
+    // التحقق من الـ MaterialApp routes إذا كان متاحاً
+    final materialApp = context.findAncestorWidgetOfExactType<MaterialApp>();
+    if (materialApp != null) {
+      log('MaterialApp found with routes');
+    } else {
+      log('MaterialApp not found in widget tree');
+    }
+  } catch (e) {
+    log('Error debugging routes: $e');
+  }
+}
 
   void _markAsRead() {
     if (!isRead) {
@@ -504,8 +645,8 @@ class NotificationItem extends StatelessWidget {
           .doc(notificationId)
           .update({'isRead': true})
           .catchError((error) {
-        log('Error marking notification as read: $error');
-      });
+            log('Error marking notification as read: $error');
+          });
     }
   }
 
