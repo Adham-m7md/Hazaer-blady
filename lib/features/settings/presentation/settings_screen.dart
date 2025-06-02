@@ -9,6 +9,7 @@ import 'package:hadaer_blady/core/widgets/custom_loading_indicator.dart';
 import 'package:hadaer_blady/core/widgets/custome_password_feild.dart';
 import 'package:hadaer_blady/core/widgets/row_profile_content.dart';
 import 'package:hadaer_blady/features/auth/presentation/signin/view/signin_screen.dart';
+import 'package:hadaer_blady/features/settings/presentation/privacy_policy_screen.dart';
 import 'package:hadaer_blady/features/who_we_are/presentation/who_we_are_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -37,6 +38,15 @@ class SettingsScreen extends StatelessWidget {
                 child: const CustomeRowProfileContent(
                   icon: Icons.info_outlined,
                   titelText: 'من نحن',
+                ),
+              ),
+              InkWell(
+                onTap: () {
+                  Navigator.pushNamed(context, PrivacyPolicyScreen.id);
+                },
+                child: const CustomeRowProfileContent(
+                  icon: Icons.privacy_tip_outlined,
+                  titelText: 'سياسة الخصوصية',
                 ),
               ),
               CustomeRowProfileContent(

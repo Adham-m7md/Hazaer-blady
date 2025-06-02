@@ -27,6 +27,7 @@ import 'package:hadaer_blady/features/onboarding/view/onboarding_view.dart';
 import 'package:hadaer_blady/features/product/presentation/product_details_screen.dart';
 import 'package:hadaer_blady/features/profile_data/presentation/profile_data.dart';
 import 'package:hadaer_blady/features/rateing/view/rating_screen.dart';
+import 'package:hadaer_blady/features/settings/presentation/privacy_policy_screen.dart';
 import 'package:hadaer_blady/features/settings/presentation/settings_screen.dart';
 import 'package:hadaer_blady/features/splash/splash_screen.dart';
 import 'package:hadaer_blady/features/who_we_are/presentation/who_we_are_screen.dart';
@@ -133,6 +134,8 @@ Route<dynamic> onGenerateRoute(RouteSettings settings) {
       return MaterialPageRoute(
         builder: (_) => const FarmerRequestOrdersScreen(),
       );
+    case PrivacyPolicyScreen.id:
+      return MaterialPageRoute(builder: (_) => const PrivacyPolicyScreen());
     case MyCoopScreen.id:
       return MaterialPageRoute(builder: (_) => const MyCoopScreen());
     case CustomProductDetailScreen.id:
