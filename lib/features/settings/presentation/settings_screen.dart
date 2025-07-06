@@ -49,12 +49,13 @@ class SettingsScreen extends StatelessWidget {
                   titelText: 'سياسة الخصوصية',
                 ),
               ),
-              CustomeRowProfileContent(
-                icon: Icons.notifications_outlined,
-                titelText: 'الأشعارات',
-                secondIcon: Icons.notifications_active_outlined,
-                actionButton: () {},
-              ),
+              // CustomeRowProfileContent(
+              //   icon: Icons.notifications_outlined,
+              //   titelText: 'الأشعارات',
+              //   secondIcon: Icons.notifications_active_outlined,
+              //   actionButton: () {},
+              // ),
+              SizedBox(height: 12),
               GestureDetector(
                 onTap: () => _showDeleteAccountDialog(context),
                 child: Container(

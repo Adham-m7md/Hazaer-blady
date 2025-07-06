@@ -1,3 +1,6 @@
+import java.io.FileInputStream
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("com.google.gms.google-services")
@@ -5,10 +8,12 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+
 android {
-    namespace = "com.example.hadaer_blady"
+    namespace = "com.hadaer_blady.app"
     compileSdk = 35
     ndkVersion = "27.0.12077973"
+
 
     compileOptions {
         isCoreLibraryDesugaringEnabled = true
@@ -21,13 +26,22 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.hadaer_blady"
+        applicationId = "com.hadaer_blady.app"
         minSdk = 24
         targetSdk = 35
-        versionCode = 1
+        versionCode = 3
         versionName = "1.0.0"
         multiDexEnabled = true
     }
+
+signingConfigs {
+    create("release") {
+        storeFile = file("F:/freelancing/hadaer_blady/android/app/hazaerblady-key.jks")
+        storePassword = "Ahmed01234"
+        keyAlias = "hazaerblady"
+        keyPassword = "Ahmed01234"
+    }
+}
 
     buildTypes {
         debug {
@@ -39,11 +53,12 @@ android {
             isDebuggable = false
             isMinifyEnabled = true
             isShrinkResources = true
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("release")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            
         }
     }
 
@@ -66,24 +81,20 @@ android {
 }
 
 dependencies {
-    // Core libraries
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
     implementation("androidx.window:window:1.3.0")
     implementation("androidx.window:window-java:1.3.0")
     implementation("androidx.multidex:multidex:2.0.1")
-    
-    // Firebase BOM - ensures all Firebase libraries use compatible versions
+
     implementation(platform("com.google.firebase:firebase-bom:32.1.0"))
     implementation("com.google.firebase:firebase-messaging")
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-analytics")
-    
-    // Google Play Services
+
     implementation("com.google.android.gms:play-services-auth:21.2.0")
     implementation("com.google.android.gms:play-services-base:18.5.0")
     implementation("com.google.android.gms:play-services-location:21.3.0")
-    
-    // Additional dependencies for better compatibility
+
     implementation("androidx.work:work-runtime:2.9.1")
     implementation("androidx.lifecycle:lifecycle-process:2.8.7")
 }
