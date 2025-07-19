@@ -1,12 +1,17 @@
 // core/managers/firebase_manager.dart
 import 'dart:developer';
 import 'dart:io';
-import 'package:firebase_messaging/firebase_messaging.dart';
+
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:hadaer_blady/firebase_options.dart';
 
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  if (Firebase.apps.isEmpty) {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  }
   log('Background message received: ${message.data}');
 }
 
@@ -18,11 +23,12 @@ class FirebaseManager {
   }
 
   static Future<void> _configureMessaging() async {
-    await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
+    await FirebaseMessaging.instance
+        .setForegroundNotificationPresentationOptions(
+          alert: true,
+          badge: true,
+          sound: true,
+        );
   }
 
   static Future<void> _requestPermissions() async {
@@ -39,7 +45,9 @@ class FirebaseManager {
 
   static void _setupBackgroundHandler() {
     if (!Platform.isIOS) {
-      FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+      FirebaseMessaging.onBackgroundMessage(
+        _firebaseMessagingBackgroundHandler,
+      );
     }
   }
 }

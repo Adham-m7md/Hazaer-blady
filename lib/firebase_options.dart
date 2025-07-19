@@ -51,8 +51,8 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyAzUnKCa7RQt_u_PQE2wKXaCsP9fihhyjk',
-    appId: '1:657048619745:android:528f5c8d2cb85b8c6205a0',
+    apiKey: 'AIzaSyCylDPxAlwNMY3WC2cI6RmIH-a7vqCopo0',
+    appId: '1:657048619745:android:ca6c2be33ecf80bd6205a0',
     messagingSenderId: '657048619745',
     projectId: 'hadaer-blady',
     storageBucket: 'hadaer-blady.firebasestorage.app',
@@ -64,7 +64,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '657048619745',
     projectId: 'hadaer-blady',
     storageBucket: 'hadaer-blady.firebasestorage.app',
-    iosBundleId: 'com.example.hadaerBlady',
+    iosBundleId: 'com.hadaer_blady.app',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
@@ -73,7 +73,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '657048619745',
     projectId: 'hadaer-blady',
     storageBucket: 'hadaer-blady.firebasestorage.app',
-    iosBundleId: 'com.example.hadaerBlady',
+    iosBundleId: 'com.hadaer_blady.app',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(

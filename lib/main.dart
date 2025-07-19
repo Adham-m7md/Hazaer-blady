@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -11,6 +12,7 @@ import 'package:hadaer_blady/core/utils/app_colors.dart';
 import 'package:hadaer_blady/features/splash/splash_screen.dart';
 import 'package:hadaer_blady/firebase_options.dart';
 import 'package:hadaer_blady/generated/l10n.dart';
+
 import 'core/services/shared_prefs_singleton.dart';
 
 Future<void> main() async {
@@ -22,9 +24,16 @@ class AppInitializer {
   static Future<void> initialize() async {
     WidgetsFlutterBinding.ensureInitialized();
 
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
+    // ✅ أضف هذا الشرط لحل مشكلة duplicate-app
+    if (Firebase.apps.isEmpty) {
+      print('Firebase is initializing...');
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+    } else {
+      print('Firebase already initialized');
+    }
+
     await Prefs.init();
     await FirebaseManager.initialize();
     setupGetIt();
@@ -34,7 +43,7 @@ class AppInitializer {
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
-  @override 
+  @override
   State<MyApp> createState() => _MyAppState();
 }
 
