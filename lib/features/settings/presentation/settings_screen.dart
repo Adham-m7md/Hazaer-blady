@@ -55,7 +55,7 @@ class SettingsScreen extends StatelessWidget {
               //   secondIcon: Icons.notifications_active_outlined,
               //   actionButton: () {},
               // ),
-              SizedBox(height: 12),
+              const SizedBox(height: 12),
               GestureDetector(
                 onTap: () => _showDeleteAccountDialog(context),
                 child: Container(

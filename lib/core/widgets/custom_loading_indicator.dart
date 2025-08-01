@@ -12,7 +12,7 @@ class CustomLoadingIndicator extends StatelessWidget {
         height: 40,
         child: CircularProgressIndicator(
           strokeWidth: 4,
-          valueColor: AlwaysStoppedAnimation<Color>(AppColors.kprimaryColor),
+          valueColor: const AlwaysStoppedAnimation<Color>(AppColors.kprimaryColor),
           backgroundColor: AppColors.kGrayColor.withAlpha(20),
         ),
       ),

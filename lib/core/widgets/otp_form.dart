@@ -14,7 +14,7 @@ class OtpForm extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.kFillGrayColor,
         border: Border.all(width: 1, color: AppColors.klightGrayColor),
-        borderRadius: BorderRadius.all(Radius.circular(4)),
+        borderRadius: const BorderRadius.all(Radius.circular(4)),
       ),
       child: TextField(
         style: Theme.of(context).textTheme.headlineLarge,

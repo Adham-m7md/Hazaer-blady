@@ -37,7 +37,7 @@ class AddCustomProductScreen extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => HomeScreen(initialTabIndex: 0),
+                          builder: (context) => const HomeScreen(initialTabIndex: 0),
                         ),
                       );
                     },

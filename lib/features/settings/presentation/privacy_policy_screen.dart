@@ -95,7 +95,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
+          const Text(
             'سياسة الخصوصية',
             style: TextStyle(
               fontSize: 24,
@@ -146,7 +146,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
         children: [
           Text(
             title,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
               color: AppColors.kprimaryColor,
@@ -332,7 +332,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
+          const Text(
             'اتصل بنا',
             style: TextStyle(
               fontSize: 18,
@@ -343,7 +343,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
           const SizedBox(height: 12),
           Row(
             children: [
-              Icon(Icons.phone, color: AppColors.kprimaryColor, size: 20),
+              const Icon(Icons.phone, color: AppColors.kprimaryColor, size: 20),
               const SizedBox(width: 8),
               Text(
                 'رقم الهاتف: 00218926827172',

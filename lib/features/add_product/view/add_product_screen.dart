@@ -63,7 +63,7 @@ class _AddProductView extends StatelessWidget {
                                   MaterialPageRoute(
                                     builder:
                                         (context) =>
-                                            HomeScreen(initialTabIndex: 0),
+                                            const HomeScreen(initialTabIndex: 0),
                                   ),
                                 );
                               },
@@ -86,7 +86,7 @@ class _AddProductView extends StatelessWidget {
                         child: Column(
                           spacing: 12,
                           children: [
-                            SizedBox(height: 12),
+                            const SizedBox(height: 12),
                             const CustomTittel(text: 'صورة المنتج :'),
                             ImagePickerWidget(
                               image: state.image,

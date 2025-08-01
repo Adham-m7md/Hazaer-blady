@@ -116,7 +116,7 @@ class Product extends StatelessWidget {
                         MainAxisSize
                             .min, // Adjusts the row size to fit its content
                     children: [
-                      Text('السعر للكيلو: ', style: TextStyles.semiBold16),
+                      const Text('السعر للكيلو: ', style: TextStyles.semiBold16),
                       Text(
                         _truncateText(
                           '${product['price_per_kg'] ?? 0} دينار',
@@ -134,7 +134,7 @@ class Product extends StatelessWidget {
                           auth: FirebaseAuth.instance,
                           userId: farmerId,
                         ),
-                    child: RatingDisplay(),
+                    child: const RatingDisplay(),
                   ),
                 ],
               ),

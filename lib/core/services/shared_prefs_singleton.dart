@@ -161,4 +161,61 @@ class Prefs {
     await clearJobTitle();
     await clearUserLocation();
   }
+  // -------- Checkout-specific data --------
+
+  static Future<void> setCheckoutName(String name) async {
+    await _instance.setString('checkoutName', name);
+  }
+
+  static String getCheckoutName() {
+    return _instance.getString('checkoutName') ?? '';
+  }
+
+  static Future<void> setCheckoutPhone(String phone) async {
+    await _instance.setString('checkoutPhone', phone);
+  }
+
+  static String getCheckoutPhone() {
+    return _instance.getString('checkoutPhone') ?? '';
+  }
+
+  static Future<void> setCheckoutCity(String city) async {
+    await _instance.setString('checkoutCity', city);
+  }
+
+  static String getCheckoutCity() {
+    return _instance.getString('checkoutCity') ?? '';
+  }
+
+  static Future<void> setCheckoutAddress(String address) async {
+    await _instance.setString('checkoutAddress', address);
+  }
+
+  static String getCheckoutAddress() {
+    return _instance.getString('checkoutAddress') ?? '';
+  }
+
+  static Future<void> setCheckoutSaved(bool value) async {
+    await _instance.setBool('checkoutDataSaved', value);
+  }
+
+  static bool isCheckoutSaved() {
+    return _instance.getBool('checkoutDataSaved') ?? false;
+  }
+
+  static Future<void> setCheckoutToggle(bool value) async {
+    await _instance.setBool('checkoutSaveToggle', value);
+  }
+
+  static bool getCheckoutToggle() {
+    return _instance.getBool('checkoutSaveToggle') ?? false;
+  }
+
+  static Future<void> clearCheckoutData() async {
+    await _instance.remove('checkoutName');
+    await _instance.remove('checkoutPhone');
+    await _instance.remove('checkoutCity');
+    await _instance.remove('checkoutAddress');
+    await _instance.remove('checkoutDataSaved');
+  }
 }

@@ -332,7 +332,7 @@ class NotificationItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String productId = data['productId'] ?? '';
+    // final String productId = data['productId'] ?? '';
     final String title = data['title'] ?? 'عرض جديد';
     final String description = data['description'] ?? '';
     final double price = _extractPrice(data);
@@ -619,22 +619,22 @@ void _navigateToOrdersScreenWithDebug(BuildContext context) async {
 }
 
 // دالة إضافية للتحقق من حالة الـ routes
-void _debugRoutes(BuildContext context) {
-  try {
-    final navigator = Navigator.of(context);
-    log('Navigator state: ${navigator.toString()}');
+// void _debugRoutes(BuildContext context) {
+//   try {
+//     final navigator = Navigator.of(context);
+//     log('Navigator state: ${navigator.toString()}');
     
-    // التحقق من الـ MaterialApp routes إذا كان متاحاً
-    final materialApp = context.findAncestorWidgetOfExactType<MaterialApp>();
-    if (materialApp != null) {
-      log('MaterialApp found with routes');
-    } else {
-      log('MaterialApp not found in widget tree');
-    }
-  } catch (e) {
-    log('Error debugging routes: $e');
-  }
-}
+//     // التحقق من الـ MaterialApp routes إذا كان متاحاً
+//     final materialApp = context.findAncestorWidgetOfExactType<MaterialApp>();
+//     if (materialApp != null) {
+//       log('MaterialApp found with routes');
+//     } else {
+//       log('MaterialApp not found in widget tree');
+//     }
+//   } catch (e) {
+//     log('Error debugging routes: $e');
+//   }
+// }
 
   void _markAsRead() {
     if (!isRead) {

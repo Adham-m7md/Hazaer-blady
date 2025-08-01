@@ -58,7 +58,7 @@ class CoopDetails extends StatelessWidget {
                   Navigator.pushAndRemoveUntil(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => HomeScreen(initialTabIndex: 0),
+                      builder: (context) => const HomeScreen(initialTabIndex: 0),
                     ),
                     (route) => false,
                   );
@@ -104,7 +104,7 @@ class CoopDetails extends StatelessWidget {
                 Navigator.pushAndRemoveUntil(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => HomeScreen(initialTabIndex: 0),
+                    builder: (context) => const HomeScreen(initialTabIndex: 0),
                   ),
                   (route) => false,
                 );
@@ -146,9 +146,9 @@ class CoopDetails extends StatelessWidget {
                           (context, error, stackTrace) => Container(
                             width: double.infinity,
                             height: 200,
-                            decoration: BoxDecoration(
+                            decoration: const BoxDecoration(
                               color: AppColors.kFillGrayColor,
-                              borderRadius: const BorderRadius.all(
+                              borderRadius: BorderRadius.all(
                                 Radius.circular(4),
                               ),
                             ),
@@ -158,17 +158,17 @@ class CoopDetails extends StatelessWidget {
                       color: AppColors.kFillGrayColor,
                       width: double.infinity,
                       height: context.screenHeight * 0.25,
-                      child: Center(
+                      child: const Center(
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           spacing: 4,
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.person,
                               color: AppColors.kGrayColor,
                               size: 40,
                             ),
-                            const Text(
+                            Text(
                               'لا يوجد صورة',
                               style: TextStyles.semiBold16,
                             ),

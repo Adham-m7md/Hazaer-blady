@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:hadaer_blady/core/services/shared_prefs_singleton.dart';
+import 'package:hadaer_blady/core/utils/app_directions.dart';
 import 'package:hadaer_blady/core/widgets/custom_text_form_feild.dart';
 import 'package:hadaer_blady/core/widgets/custom_tittel.dart';
+import 'package:hadaer_blady/core/widgets/my_custom_check_togel.dart';
 
 class Checkout1Data extends StatefulWidget {
   final Function(Map<String, String>)? onDataSubmitted;
@@ -17,6 +20,28 @@ class Checkout1DataState extends State<Checkout1Data> {
   final _phoneController = TextEditingController();
   final _cityController = TextEditingController();
   final _addressController = TextEditingController();
+  bool isActive = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedData();
+  }
+
+  void _loadSavedData() {
+    final isSaved = Prefs.isCheckoutSaved();
+    final savedToggle = Prefs.getCheckoutToggle();
+
+    setState(() {
+      isActive = savedToggle;
+      if (isSaved) {
+        _nameController.text = Prefs.getCheckoutName();
+        _phoneController.text = Prefs.getCheckoutPhone();
+        _cityController.text = Prefs.getCheckoutCity();
+        _addressController.text = Prefs.getCheckoutAddress();
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -27,15 +52,25 @@ class Checkout1DataState extends State<Checkout1Data> {
     super.dispose();
   }
 
-  void submitData() {
+  void submitData() async {
     if (_formKey.currentState?.validate() ?? false) {
+      if (isActive) {
+        await Prefs.setCheckoutName(_nameController.text);
+        await Prefs.setCheckoutPhone(_phoneController.text);
+        await Prefs.setCheckoutCity(_cityController.text);
+        await Prefs.setCheckoutAddress(_addressController.text);
+        await Prefs.setCheckoutSaved(true); // نحفظ إنها محفوظة
+      } else {
+        await Prefs.clearCheckoutData(); // نمسح البيانات القديمة
+      }
+
       widget.onDataSubmitted?.call({
         'name': _nameController.text,
         'phone': _phoneController.text,
         'city': _cityController.text,
         'address': _addressController.text,
       });
-    } else {}
+    }
   }
 
   @override
@@ -44,6 +79,7 @@ class Checkout1DataState extends State<Checkout1Data> {
       key: _formKey,
       child: SingleChildScrollView(
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           spacing: 12,
           children: [
             const Padding(
@@ -96,6 +132,21 @@ class Checkout1DataState extends State<Checkout1Data> {
                 }
                 return null;
               },
+            ),
+            Row(
+              spacing: context.screenWidth * 0.03,
+              children: [
+                MyCustomCheckTogel(
+                  isActive: isActive,
+                  onChanged: () async {
+                    setState(() {
+                      isActive = !isActive;
+                    });
+                    await Prefs.setCheckoutToggle(isActive);
+                  },
+                ),
+                Text('حفظ البيانات لعمليات الشراء القادمة'),
+              ],
             ),
           ],
         ),

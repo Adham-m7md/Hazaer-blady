@@ -205,7 +205,7 @@ Route<dynamic> onGenerateRoute(RouteSettings settings) {
           settings.arguments as List<Map<String, dynamic>>? ?? [];
       debugPrint('onGenerateRoute: CheckoutFlow arguments = $selectedItems');
       return MaterialPageRoute(
-        builder: (_) => CheckoutFlow(),
+        builder: (_) => const CheckoutFlow(),
         settings: RouteSettings(arguments: selectedItems), // تمرير arguments
       );
     case CheckoutScreen.id:

@@ -40,7 +40,7 @@ class OnboardingView extends StatelessWidget {
               DotsIndicator(
                 dotsCount: 1,
                 position: 0,
-                decorator: DotsDecorator(activeColor: AppColors.kprimaryColor),
+                decorator: const DotsDecorator(activeColor: AppColors.kprimaryColor),
               ),
               SizedBox(height: context.screenHeight * 0.02),
               Padding(

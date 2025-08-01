@@ -160,7 +160,7 @@ class EnhancedUserDeletionService {
 
           // استراحة قصيرة بين الـ batches
           if (hasMore) {
-            await Future.delayed(Duration(milliseconds: 100));
+            await Future.delayed(const Duration(milliseconds: 100));
           }
         } catch (e) {
           log('خطأ في المحاولة $attempts لحذف $subcollectionName: $e');
@@ -168,7 +168,7 @@ class EnhancedUserDeletionService {
             rethrow;
           }
           // استراحة أطول في حالة الخطأ
-          await Future.delayed(Duration(milliseconds: 500));
+          await Future.delayed(const Duration(milliseconds: 500));
         }
       }
 

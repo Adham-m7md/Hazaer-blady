@@ -71,8 +71,8 @@ class _ProfileDataState extends State<ProfileData> {
         Prefs.getUserName().isNotEmpty && Prefs.getUserName() != 'User';
     final hasEmail = Prefs.getUserEmail().isNotEmpty;
     final hasPhone = Prefs.getUserPhone().isNotEmpty;
-    final hasCity = Prefs.getUserCity().isNotEmpty;
-    final hasAddress = Prefs.getUserAddress().isNotEmpty;
+    // final hasCity = Prefs.getUserCity().isNotEmpty;
+    // final hasAddress = Prefs.getUserAddress().isNotEmpty;
 
     // If we have most of the data locally, consider it sufficient
     final hasLocalData = hasName && hasEmail && hasPhone;

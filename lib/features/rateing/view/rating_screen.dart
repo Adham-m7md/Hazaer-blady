@@ -188,7 +188,7 @@ class _RatingScreenContent extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Flexible(
+        const Flexible(
           child: Text(
             'الملخص',
             style: TextStyles.semiBold19,
@@ -235,7 +235,7 @@ class _RatingScreenContent extends StatelessWidget {
   Widget _buildReviewCount(RatingCubit cubit) {
     return Row(
       children: [
-        Flexible(
+        const Flexible(
           child: Text(
             'عدد المراجعات :',
             style: TextStyles.semiBold19,
@@ -251,9 +251,9 @@ class _RatingScreenContent extends StatelessWidget {
   Widget _buildRatingsList(BuildContext context, RatingCubit cubit) {
     final currentUserId = cubit.currentUserId;
     if (cubit.ratings.isEmpty) {
-      return Center(
+      return const Center(
         child: Padding(
-          padding: const EdgeInsets.all(32.0),
+          padding: EdgeInsets.all(32.0),
           child: Text(
             'لا توجد مراجعات حتى الآن. كن أول من يقيم!',
             style: TextStyles.regular16,
@@ -310,7 +310,7 @@ class _RatingScreenContent extends StatelessWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text('أضف تقييم', style: TextStyles.bold19),
+                    const Text('أضف تقييم', style: TextStyles.bold19),
                     const SizedBox(height: 16),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -418,7 +418,7 @@ class _RatingScreenContent extends StatelessWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text('تعديل تقييم', style: TextStyles.bold19),
+                    const Text('تعديل تقييم', style: TextStyles.bold19),
                     const SizedBox(height: 16),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -502,8 +502,8 @@ class _RatingScreenContent extends StatelessWidget {
       builder: (context) {
         return AlertDialog(
           backgroundColor: AppColors.kWiteColor,
-          title: Text('حذف التقييم', style: TextStyles.bold19),
-          content: Text(
+          title: const Text('حذف التقييم', style: TextStyles.bold19),
+          content: const Text(
             'هل أنت متأكد من رغبتك في حذف هذا التقييم؟',
             style: TextStyles.regular16,
           ),

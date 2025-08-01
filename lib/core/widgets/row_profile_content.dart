@@ -25,7 +25,7 @@ class CustomeRowProfileContent extends StatelessWidget {
           titelText,
           style: TextStyles.semiBold16.copyWith(color: AppColors.kGrayColor),
         ),
-        Spacer(),
+        const Spacer(),
         IconButton(
           onPressed: actionButton,
           icon: Icon(secondIcon, color: AppColors.kprimaryColor),

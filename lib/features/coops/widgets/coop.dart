@@ -56,10 +56,10 @@ class Coop extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  CircleAvatar(
+                  const CircleAvatar(
                     backgroundColor: AppColors.kprimaryColor,
                     radius: 12.5,
-                    child: const Icon(
+                    child: Icon(
                       Icons.person,
                       color: AppColors.kWiteColor,
                       size: 16,
@@ -100,7 +100,7 @@ class Coop extends StatelessWidget {
                         auth: FirebaseAuth.instance,
                         userId: id,
                       ),
-                      child: RatingDisplay(),
+                      child: const RatingDisplay(),
                     ),
               Row(
                 children: [
@@ -120,13 +120,13 @@ class Coop extends StatelessWidget {
                         return const SizedBox.shrink();
                       }
                       if (snapshot.hasError || !snapshot.hasData) {
-                        return Text.rich(
+                        return const Text.rich(
                           textAlign: TextAlign.right,
                           TextSpan(
                             style: TextStyles.regular16,
                             children: [
-                              const TextSpan(text: 'اجمالي العروض :'),
-                              const TextSpan(text: ' 0'),
+                              TextSpan(text: 'اجمالي العروض :'),
+                              TextSpan(text: ' 0'),
                             ],
                           ),
                         );

@@ -103,7 +103,7 @@ class CartScreen extends StatelessWidget {
                               context,
                               MaterialPageRoute(
                                 builder:
-                                    (context) => HomeScreen(initialTabIndex: 0),
+                                    (context) => const HomeScreen(initialTabIndex: 0),
                               ),
                               (route) => false,
                             );
@@ -203,7 +203,7 @@ class CartScreen extends StatelessWidget {
                           context,
                           MaterialPageRoute(
                             builder:
-                                (context) => HomeScreen(initialTabIndex: 0),
+                                (context) => const HomeScreen(initialTabIndex: 0),
                           ),
                           (route) => false,
                         );

@@ -11,8 +11,8 @@ class LocationWidget extends StatelessWidget {
         backgroundColor: WidgetStateProperty.all(AppColors.kFillGrayColor),
       ),
       onPressed: () {},
-      icon: Padding(
-        padding: const EdgeInsets.all(4.0),
+      icon: const Padding(
+        padding: EdgeInsets.all(4.0),
         child: Icon(
           Icons.location_on,
           color: AppColors.kprimaryColor,

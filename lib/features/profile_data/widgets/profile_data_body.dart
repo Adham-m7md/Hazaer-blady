@@ -167,7 +167,7 @@ class ProfileDataBody extends StatelessWidget {
                       ),
                     ),
                     const Spacer(),
-                    Icon(
+                    const Icon(
                       Icons.location_on_outlined,
                       color: AppColors.kGrayColor,
                     ),

@@ -582,19 +582,19 @@ class FirebaseAuthService {
     }
   }
 
-  _listenToFCMTokenRefresh() {
-    FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
-      final userId = FirebaseAuth.instance.currentUser?.uid;
-      if (userId != null) {
-        await FirebaseFirestore.instance.collection('users').doc(userId).update(
-          {'fcm_token': newToken},
-        );
-        log('FCM token updated: $newToken');
-      } else {
-        print('No user logged in to update FCM token.');
-      }
-    });
-  }
+  // void _listenToFCMTokenRefresh() {
+  //   FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
+  //     final userId = FirebaseAuth.instance.currentUser?.uid;
+  //     if (userId != null) {
+  //       await FirebaseFirestore.instance.collection('users').doc(userId).update(
+  //         {'fcm_token': newToken},
+  //       );
+  //       log('FCM token updated: $newToken');
+  //     } else {
+  //       print('No user logged in to update FCM token.');
+  //     }
+  //   });
+  // }
 
   Future<bool> isEmailVerified() async {
     try {

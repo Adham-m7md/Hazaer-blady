@@ -29,7 +29,7 @@ class _FarmerRequestOrdersScreenState extends State<FarmerRequestOrdersScreen>
   final NotificationService _notificationService = NotificationService();
   final FarmerOrderService _farmerOrderService = FarmerOrderService();
   late TabController _tabController;
-  int _unreadCount = 0;
+  int unreadCount = 0;
 
   @override
   void initState() {
@@ -49,7 +49,7 @@ class _FarmerRequestOrdersScreenState extends State<FarmerRequestOrdersScreen>
       final count = await _notificationService.getUnreadNotificationsCount();
       if (mounted) {
         setState(() {
-          _unreadCount = count;
+          unreadCount = count;
         });
       }
     } catch (e) {
@@ -315,7 +315,11 @@ class _FarmerRequestOrdersScreenState extends State<FarmerRequestOrdersScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.error_outline, size: 64, color: AppColors.kRedColor),
+            const Icon(
+              Icons.error_outline,
+              size: 64,
+              color: AppColors.kRedColor,
+            ),
             const SizedBox(height: 16),
             Text(
               'خطأ في تحميل الطلبات',
@@ -384,30 +388,30 @@ class _FarmerRequestOrdersScreenState extends State<FarmerRequestOrdersScreen>
     );
   }
 
-  Widget _buildStatItem(
-    String label,
-    String value,
-    IconData icon, {
-    Color? color,
-  }) {
-    return Column(
-      children: [
-        Icon(icon, size: 24, color: color ?? AppColors.kprimaryColor),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: TextStyles.bold16.copyWith(
-            color: color ?? AppColors.kprimaryColor,
-          ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          label,
-          style: TextStyles.semiBold13.copyWith(color: AppColors.kGrayColor),
-        ),
-      ],
-    );
-  }
+  // Widget _buildStatItem(
+  //   String label,
+  //   String value,
+  //   IconData icon, {
+  //   Color? color,
+  // }) {
+  //   return Column(
+  //     children: [
+  //       Icon(icon, size: 24, color: color ?? AppColors.kprimaryColor),
+  //       const SizedBox(height: 4),
+  //       Text(
+  //         value,
+  //         style: TextStyles.bold16.copyWith(
+  //           color: color ?? AppColors.kprimaryColor,
+  //         ),
+  //       ),
+  //       const SizedBox(height: 2),
+  //       Text(
+  //         label,
+  //         style: TextStyles.semiBold13.copyWith(color: AppColors.kGrayColor),
+  //       ),
+  //     ],
+  //   );
+  // }
 }
 
 class EnhancedFarmerOrderCard extends StatelessWidget {
@@ -817,11 +821,11 @@ class EnhancedFarmerOrderCard extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          title: Row(
+          title: const Row(
             children: [
               Icon(Icons.warning_amber_outlined, color: AppColors.kRedColor),
-              const SizedBox(width: 8),
-              const Text('تأكيد الإلغاء'),
+              SizedBox(width: 8),
+              Text('تأكيد الإلغاء'),
             ],
           ),
           content: const Text(
