@@ -18,7 +18,7 @@ class CartCubit extends Cubit<CartState> {
   Future<void> addToCart({
     required String productId,
     required Map<String, dynamic> productData,
-    required int quantity,
+    // required int quantity,
     required double totalPrice,
   }) async {
     try {
@@ -27,14 +27,14 @@ class CartCubit extends Cubit<CartState> {
       await _cartService.addToCart(
         productId: productId,
         productData: productData,
-        quantity: quantity,
+        // quantity: quantity,
         totalPrice: totalPrice,
       );
 
       final newItem = {
         'productId': productId,
         'productData': productData,
-        'quantity': quantity,
+        // 'quantity': quantity,
         'totalPrice': totalPrice,
       };
 

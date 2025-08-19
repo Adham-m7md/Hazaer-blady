@@ -9,12 +9,9 @@ import 'package:hadaer_blady/features/cart/cubit/cart_cubit.dart';
 import 'package:hadaer_blady/features/product/widgets/add_to_cart_button.dart';
 import 'package:hadaer_blady/features/product/widgets/farmer_info.dart';
 import 'package:hadaer_blady/features/product/widgets/location_info.dart';
-import 'package:hadaer_blady/features/product/widgets/price_info.dart';
 import 'package:hadaer_blady/features/product/widgets/product_image.dart';
-import 'package:hadaer_blady/features/product/widgets/quantity_sellector_widgets.dart';
 import 'package:hadaer_blady/features/product/widgets/rating_info.dart';
 import 'package:hadaer_blady/features/product/widgets/total_price_info.dart';
-import 'package:hadaer_blady/features/product/widgets/weight_info_widgets.dart';
 import 'package:hadaer_blady/features/rateing/cubit/rating_cubit.dart';
 import 'package:hadaer_blady/features/rateing/cubit/rating_state.dart';
 
@@ -101,22 +98,30 @@ class _ProductDetailsContentState extends State<ProductDetailsContent> {
                       ),
                   child: RatingWithBlocBuilder(farmerId: _farmerId),
                 ),
-
-                Text(
-                  widget.productData['name'] ?? 'منتج غير معروف',
-                  style: TextStyles.semiBold19,
+               const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.center,
+                  child: Text(
+                    widget.productData['name'] ?? 'منتج غير معروف',
+                    style: TextStyles.semiBold19,
+                    textAlign: TextAlign.center,
+                  ),
                 ),
                 const SizedBox(height: 8),
-                Text(
-                  widget.productData['description'] ?? 'لا يوجد وصف',
-                  style: TextStyles.semiBold16,
+                Align(
+                  alignment: Alignment.center,
+                  child: Text(
+                    textAlign: TextAlign.center,
+                    widget.productData['description'] ?? 'لا يوجد وصف',
+                    style: TextStyles.semiBold16,
+                  ),
                 ),
                 const SizedBox(height: 16),
-                QuantitySelector(quantity: widget.quantity),
-                const SizedBox(height: 16),
-                WeightInfo(minWeight: minWeight, maxWeight: maxWeight),
-                const SizedBox(height: 16),
-                PriceInfo(pricePerKg: pricePerKg),
+                // QuantitySelector(quantity: widget.quantity),
+                // const SizedBox(height: 16),
+                // WeightInfo(minWeight: minWeight, maxWeight: maxWeight),
+                // const SizedBox(height: 16),
+                // PriceInfo(pricePerKg: pricePerKg),
                 const SizedBox(height: 16),
                 TotalPriceInfo(totalPrice: totalPrice),
                 SizedBox(height: context.screenHeight * 0.07),
@@ -125,7 +130,7 @@ class _ProductDetailsContentState extends State<ProductDetailsContent> {
                     create: (context) => CartCubit(),
                     child: AddToCartButton(
                       productData: widget.productData,
-                      quantity: widget.quantity,
+                      // quantity: widget.quantity,
                       totalPrice: double.parse(totalPrice),
                     ),
                   ),

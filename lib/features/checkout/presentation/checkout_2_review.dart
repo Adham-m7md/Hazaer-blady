@@ -114,12 +114,12 @@ class Checkout2Review extends StatelessWidget {
                                     style: TextStyles.semiBold16,
                                     overflow: TextOverflow.ellipsis,
                                   ),
-                                  Text(
-                                    'الكمية: ${item['quantity']}',
-                                    style: TextStyles.regular13.copyWith(
-                                      color: AppColors.kGrayColor,
-                                    ),
-                                  ),
+                                  // Text(
+                                  //   'الكمية: ${item['quantity']}',
+                                  //   style: TextStyles.regular13.copyWith(
+                                  //     color: AppColors.kGrayColor,
+                                  //   ),
+                                  // ),
                                 ],
                               ),
                             ),

@@ -13,7 +13,7 @@ class CartService {
   Future<void> addToCart({
     required String productId,
     required Map<String, dynamic> productData,
-    required int quantity,
+    // required int quantity,
     required double totalPrice,
   }) async {
     try {
@@ -35,38 +35,38 @@ class CartService {
       final existingItem = await cartRef.get();
 
       if (existingItem.exists) {
-        final existingQuantity = existingItem.data()?['quantity'] ?? 0;
-        final newQuantity = existingQuantity + quantity;
+        // final existingQuantity = existingItem.data()?['quantity'] ?? 0;
+        // final newQuantity = existingQuantity + quantity;
 
         // التحقق مما إذا كان المنتج عرضًا مميزًا أو منتجًا عاديًا
-        double newTotalPrice;
+        // double newTotalPrice;
         if (productData.containsKey('price')) {
           // للعرض المميز: استخدام حقل price مباشرة
-          newTotalPrice = (productData['price'] ?? 0.0) * newQuantity;
+          // newTotalPrice = (productData['price'] ?? 0.0) * newQuantity;
         } else {
           // للمنتج العادي: استخدام price_per_kg و min/max_weight
-          newTotalPrice =
-              (productData['price_per_kg'] ?? 0.0) *
-              ((productData['min_weight'] ?? 0.0) +
-                  (productData['max_weight'] ?? 0.0)) /
-              2 *
-              newQuantity;
+          // newTotalPrice =
+          //     (productData['price_per_kg'] ?? 0.0) *
+          //     ((productData['min_weight'] ?? 0.0) +
+          //         (productData['max_weight'] ?? 0.0)) /
+          //     2 *
+          //     newQuantity;
         }
 
         await cartRef.update({
-          'quantity': newQuantity,
-          'totalPrice': newTotalPrice,
+          // 'quantity': newQuantity,
+          // 'totalPrice': newTotalPrice,
           'updatedAt': FieldValue.serverTimestamp(),
         });
 
         _logger.info(
-          'تم تحديث المنتج في السلة: $productId، الكمية الجديدة: $newQuantity',
+          'تم تحديث المنتج في السلة: $productId، ',
         );
       } else {
         await cartRef.set({
           'productId': productId,
           'productData': productData,
-          'quantity': quantity,
+          // 'quantity': quantity,
           'totalPrice': totalPrice,
           'addedAt': FieldValue.serverTimestamp(),
         });

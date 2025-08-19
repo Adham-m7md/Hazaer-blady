@@ -17,8 +17,8 @@ class ProductService {
     required String description,
     required double pricePerKg,
     required File image,
-    required int minWeight,
-    required int maxWeight,
+    // required int minWeight,
+    // required int maxWeight,
   }) async {
     try {
       log('Starting addProduct for user: ${_auth.currentUser?.uid}');
@@ -44,14 +44,6 @@ class ProductService {
       if (pricePerKg <= 0) {
         throw CustomException(message: 'السعر يجب أن يكون أكبر من صفر');
       }
-      if (minWeight <= 0 || maxWeight <= 0) {
-        throw CustomException(message: 'الأوزان يجب أن تكون أكبر من صفر');
-      }
-      if (minWeight > maxWeight) {
-        throw CustomException(
-          message: 'الوزن الأدنى يجب أن يكون أقل من الأقصى',
-        );
-      }
       log('Validating image size');
       final imageSizeInMB = image.lengthSync() / (1024 * 1024);
       if (imageSizeInMB > 5) {
@@ -73,8 +65,6 @@ class ProductService {
         'description': description.trim(),
         'price_per_kg': pricePerKg,
         'image_url': imageUrl,
-        'min_weight': minWeight,
-        'max_weight': maxWeight,
         'farmer_id': user.uid,
         'created_at': FieldValue.serverTimestamp(),
       });
@@ -127,8 +117,7 @@ class ProductService {
     String? description,
     double? pricePerKg,
     File? image,
-    int? minWeight,
-    int? maxWeight,
+    
     double? quantity, // Added quantity
     double? totalPrice, // Added totalPrice
   }) async {
@@ -156,12 +145,6 @@ class ProductService {
       }
       if (pricePerKg != null && pricePerKg > 0) {
         updateData['price_per_kg'] = pricePerKg;
-      }
-      if (minWeight != null && minWeight > 0) {
-        updateData['min_weight'] = minWeight;
-      }
-      if (maxWeight != null && maxWeight > 0) {
-        updateData['max_weight'] = maxWeight;
       }
       if (quantity != null && quantity > 0) {
         updateData['quantity'] = quantity;

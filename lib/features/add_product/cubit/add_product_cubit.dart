@@ -76,8 +76,7 @@ class AddProductCubit extends Cubit<AddProductState> {
         description: state.descriptionController.text.trim(),
         pricePerKg: pricePerKg,
         image: state.image!,
-        minWeight: state.minWeight,
-        maxWeight: state.maxWeight,
+       
       );
       log('Product added successfully');
       emit(state.copyWith(isLoading: false, isSuccess: true));

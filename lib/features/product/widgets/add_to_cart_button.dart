@@ -10,13 +10,13 @@ import 'package:hadaer_blady/features/product/cubit/product_details_cubit.dart';
 
 class AddToCartButton extends StatelessWidget {
   final Map<String, dynamic> productData;
-  final int quantity;
+  // final int quantity;
   final double totalPrice;
 
   const AddToCartButton({
     super.key,
     required this.productData,
-    required this.quantity,
+    // required this.quantity,
     required this.totalPrice,
   });
 
@@ -37,7 +37,7 @@ class AddToCartButton extends StatelessWidget {
       await cartCubit.addToCart(
         productId: productId,
         productData: productData,
-        quantity: quantity,
+        // quantity: quantity,
         totalPrice: totalPrice,
       );
       // 2. التحقق من نوع المستخدم (مزارع أم مستخدم عادي)
@@ -75,7 +75,7 @@ class AddToCartButton extends StatelessWidget {
       context: context,
       builder:
           (context) => CustomeShowDialog(
-            text: 'تمت إضافة $productName ($quantity) إلى السلة',
+            text: 'تمت إضافة $productName  إلى السلة',
             buttonText: 'عرض السلة',
             onPressed: () {
               Navigator.pop(context); // إغلاق الـ Dialog

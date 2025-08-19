@@ -152,7 +152,7 @@ class _CustomProductDetailScreenState extends State<CustomProductDetailScreen> {
       await cartCubit.addToCart(
         productId: widget.product.id,
         productData: productData,
-        quantity: quantity,
+        // quantity: quantity,
         totalPrice: totalPrice,
       );
 

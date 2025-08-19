@@ -62,8 +62,9 @@ class _AddProductView extends StatelessWidget {
                                   context,
                                   MaterialPageRoute(
                                     builder:
-                                        (context) =>
-                                            const HomeScreen(initialTabIndex: 0),
+                                        (context) => const HomeScreen(
+                                          initialTabIndex: 0,
+                                        ),
                                   ),
                                 );
                               },
@@ -100,13 +101,13 @@ class _AddProductView extends StatelessWidget {
                               priceController: state.priceController,
                               formKey: formKey,
                             ),
-                            _WeightSelector(
-                              minWeight: state.minWeight,
-                              maxWeight: state.maxWeight,
-                              onMinWeightChanged: cubit.updateMinWeight,
-                              onMaxWeightChanged: cubit.updateMaxWeight,
-                            ),
 
+                            // _WeightSelector(
+                            //   minWeight: state.minWeight,
+                            //   maxWeight: state.maxWeight,
+                            //   onMinWeightChanged: cubit.updateMinWeight,
+                            //   onMaxWeightChanged: cubit.updateMaxWeight,
+                            // ),
                             SizedBox(height: context.screenHeight * 0.02),
                             AddProductButton(
                               onPressed:
@@ -217,7 +218,7 @@ class _ProductFormFields extends StatelessWidget {
         ),
         CustomTextFormFeild(
           maxLength: 6,
-          hintText: 'السعر للكيلو',
+          hintText: 'السعر',
           controller: priceController,
           keyBoardType: TextInputType.number,
           validator: (value) {
