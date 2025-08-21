@@ -116,11 +116,11 @@ class Product extends StatelessWidget {
                         MainAxisSize
                             .min, // Adjusts the row size to fit its content
                     children: [
-                      const Text('السعر للكيلو: ', style: TextStyles.semiBold16),
+                      const Text('السعر: ', style: TextStyles.semiBold16),
                       Text(
                         _truncateText(
                           '${product['price_per_kg'] ?? 0} دينار',
-                          4,
+                          6,
                         ),
                         style: TextStyles.semiBold16,
                       ),
@@ -141,8 +141,8 @@ class Product extends StatelessWidget {
               ClipRRect(
                 borderRadius: BorderRadius.circular(24),
                 child: Container(
-                  width: 120,
-                  height: 120,
+                  width: context.screenWidth * 0.325,
+                  height: context.screenHeight * 0.15,
                   color: AppColors.kFillGrayColor,
                   child: Image.network(
                     product['image_url'] ?? '',

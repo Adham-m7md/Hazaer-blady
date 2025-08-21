@@ -37,7 +37,7 @@ class AddToCartButton extends StatelessWidget {
       await cartCubit.addToCart(
         productId: productId,
         productData: productData,
-        // quantity: quantity,
+ 
         totalPrice: totalPrice,
       );
       // 2. التحقق من نوع المستخدم (مزارع أم مستخدم عادي)

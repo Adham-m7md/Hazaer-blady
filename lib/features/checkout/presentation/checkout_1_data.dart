@@ -145,7 +145,7 @@ class Checkout1DataState extends State<Checkout1Data> {
                     await Prefs.setCheckoutToggle(isActive);
                   },
                 ),
-                Text('حفظ البيانات لعمليات الشراء القادمة'),
+                const Text('حفظ البيانات لعمليات الشراء القادمة'),
               ],
             ),
           ],

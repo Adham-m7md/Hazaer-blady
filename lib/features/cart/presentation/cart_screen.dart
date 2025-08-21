@@ -103,7 +103,8 @@ class CartScreen extends StatelessWidget {
                               context,
                               MaterialPageRoute(
                                 builder:
-                                    (context) => const HomeScreen(initialTabIndex: 0),
+                                    (context) =>
+                                        const HomeScreen(initialTabIndex: 0),
                               ),
                               (route) => false,
                             );
@@ -203,7 +204,8 @@ class CartScreen extends StatelessWidget {
                           context,
                           MaterialPageRoute(
                             builder:
-                                (context) => const HomeScreen(initialTabIndex: 0),
+                                (context) =>
+                                    const HomeScreen(initialTabIndex: 0),
                           ),
                           (route) => false,
                         );
@@ -398,14 +400,9 @@ class CartItemWidget extends StatelessWidget {
                       color: AppColors.kGrayColor,
                     ),
                   ),
+
                   Text(
-                    'الكمية: ${item['quantity']}',
-                    style: TextStyles.bold13.copyWith(
-                      color: AppColors.kGrayColor,
-                    ),
-                  ),
-                  Text(
-                    '${item['totalPrice']} دينار',
+                    '${productData['price_per_kg']} دينار',
                     style: TextStyles.bold16.copyWith(
                       color: AppColors.kprimaryColor,
                     ),

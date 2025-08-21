@@ -35,7 +35,6 @@ class _ProductDetailsContentState extends State<ProductDetailsContent> {
   final FirebaseAuthService _firebaseAuthService = getIt<FirebaseAuthService>();
   late String _currentUserId = '';
   late String _farmerId = '';
-  // لن نستخدم RatingCubit هنا مباشرة
 
   @override
   void initState() {
@@ -55,13 +54,13 @@ class _ProductDetailsContentState extends State<ProductDetailsContent> {
   Widget build(BuildContext context) {
     final pricePerKg =
         (widget.productData['price_per_kg'] as num?)?.toDouble() ?? 0.0;
-    final minWeight =
-        (widget.productData['min_weight'] as num?)?.toDouble() ?? 0.0;
-    final maxWeight =
-        (widget.productData['max_weight'] as num?)?.toDouble() ?? 0.0;
-    final averageWeight = (minWeight + maxWeight) / 2;
-    final totalPrice = (widget.quantity * pricePerKg * averageWeight)
-        .toStringAsFixed(2);
+    // final minWeight =
+    //     (widget.productData['min_weight'] as num?)?.toDouble() ?? 0.0;
+    // final maxWeight =
+    //     (widget.productData['max_weight'] as num?)?.toDouble() ?? 0.0;
+    // final averageWeight = (minWeight + maxWeight) / 2;
+    // final totalPrice = (widget.quantity * pricePerKg * averageWeight)
+    //  .toStringAsFixed(2);
     final isOwnProduct =
         _currentUserId == (widget.productData['farmer_id'] ?? '');
     final farmerId = widget.productData['farmer_id'] ?? '';
@@ -98,7 +97,7 @@ class _ProductDetailsContentState extends State<ProductDetailsContent> {
                       ),
                   child: RatingWithBlocBuilder(farmerId: _farmerId),
                 ),
-               const SizedBox(height: 8),
+                const SizedBox(height: 8),
                 Align(
                   alignment: Alignment.center,
                   child: Text(
@@ -123,7 +122,7 @@ class _ProductDetailsContentState extends State<ProductDetailsContent> {
                 // const SizedBox(height: 16),
                 // PriceInfo(pricePerKg: pricePerKg),
                 const SizedBox(height: 16),
-                TotalPriceInfo(totalPrice: totalPrice),
+                TotalPriceInfo(totalPrice: pricePerKg.toStringAsFixed(2)),
                 SizedBox(height: context.screenHeight * 0.07),
                 if (!isOwnProduct)
                   BlocProvider(
@@ -131,7 +130,7 @@ class _ProductDetailsContentState extends State<ProductDetailsContent> {
                     child: AddToCartButton(
                       productData: widget.productData,
                       // quantity: widget.quantity,
-                      totalPrice: double.parse(totalPrice),
+                      totalPrice: double.parse(pricePerKg.toStringAsFixed(2)),
                     ),
                   ),
               ],

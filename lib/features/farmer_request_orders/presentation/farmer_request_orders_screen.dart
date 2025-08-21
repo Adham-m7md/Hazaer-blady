@@ -387,31 +387,6 @@ class _FarmerRequestOrdersScreenState extends State<FarmerRequestOrdersScreen>
       ),
     );
   }
-
-  // Widget _buildStatItem(
-  //   String label,
-  //   String value,
-  //   IconData icon, {
-  //   Color? color,
-  // }) {
-  //   return Column(
-  //     children: [
-  //       Icon(icon, size: 24, color: color ?? AppColors.kprimaryColor),
-  //       const SizedBox(height: 4),
-  //       Text(
-  //         value,
-  //         style: TextStyles.bold16.copyWith(
-  //           color: color ?? AppColors.kprimaryColor,
-  //         ),
-  //       ),
-  //       const SizedBox(height: 2),
-  //       Text(
-  //         label,
-  //         style: TextStyles.semiBold13.copyWith(color: AppColors.kGrayColor),
-  //       ),
-  //     ],
-  //   );
-  // }
 }
 
 class EnhancedFarmerOrderCard extends StatelessWidget {
@@ -434,10 +409,14 @@ class EnhancedFarmerOrderCard extends StatelessWidget {
     final status = orderData['status'] as String? ?? 'pending';
     final isNew = status == 'pending';
 
-    final totalPrice = cartItems.fold<double>(
-      0,
-      (sum, item) => sum + (item['totalPrice'] as num).toDouble(),
-    );
+    final totalPrice = cartItems.fold<double>(0, (sum, item) {
+      final productData = item['productData'] as Map<String, dynamic>? ?? {};
+      final pricePerKg =
+          (productData['price_per_kg'] as num?)?.toDouble() ?? 0.0;
+      final quantity =
+          (item['quantity'] as num?)?.toDouble() ?? 1.0; // لو عندك quantity
+      return sum + (pricePerKg * quantity);
+    });
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -628,7 +607,8 @@ class EnhancedFarmerOrderCard extends StatelessWidget {
         ...cartItems.map((item) {
           final productData = item['productData'] as Map<String, dynamic>;
           final quantity = item['quantity'] as int? ?? 1;
-          final itemTotalPrice = (item['totalPrice'] as num).toDouble();
+          final itemTotalPrice =
+              (productData['price_per_kg'] as num).toDouble();
 
           return Container(
             margin: const EdgeInsets.only(bottom: 6),

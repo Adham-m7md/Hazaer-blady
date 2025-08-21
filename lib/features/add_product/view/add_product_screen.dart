@@ -101,13 +101,6 @@ class _AddProductView extends StatelessWidget {
                               priceController: state.priceController,
                               formKey: formKey,
                             ),
-
-                            // _WeightSelector(
-                            //   minWeight: state.minWeight,
-                            //   maxWeight: state.maxWeight,
-                            //   onMinWeightChanged: cubit.updateMinWeight,
-                            //   onMaxWeightChanged: cubit.updateMaxWeight,
-                            // ),
                             SizedBox(height: context.screenHeight * 0.02),
                             AddProductButton(
                               onPressed:
@@ -236,81 +229,3 @@ class _ProductFormFields extends StatelessWidget {
   }
 }
 
-class _WeightSelector extends StatelessWidget {
-  final int minWeight;
-  final int maxWeight;
-  final ValueChanged<int> onMinWeightChanged;
-  final ValueChanged<int> onMaxWeightChanged;
-
-  const _WeightSelector({
-    required this.minWeight,
-    required this.maxWeight,
-    required this.onMinWeightChanged,
-    required this.onMaxWeightChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        const Text('الوزن : ', style: TextStyles.semiBold16),
-        Row(
-          children: [
-            const Text('من', style: TextStyles.semiBold16),
-            PopupMenuButton<int>(
-              position: PopupMenuPosition.under,
-              color: AppColors.kFillGrayColor,
-              onSelected: onMinWeightChanged,
-              itemBuilder:
-                  (context) => List.generate(
-                    6,
-                    (index) => PopupMenuItem(
-                      value: index + 1,
-                      child: Text('${index + 1}', style: TextStyles.bold16),
-                    ),
-                  ),
-              child: Container(
-                decoration: const BoxDecoration(
-                  color: AppColors.klightGrayColor,
-                  borderRadius: BorderRadius.all(Radius.circular(50)),
-                ),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 4,
-                ),
-                child: Text('$minWeight', style: TextStyles.semiBold16),
-              ),
-            ),
-            const Text('~', style: TextStyles.bold28),
-            const Text('الى', style: TextStyles.semiBold16),
-            PopupMenuButton<int>(
-              position: PopupMenuPosition.under,
-              color: AppColors.kFillGrayColor,
-              onSelected: onMaxWeightChanged,
-              itemBuilder:
-                  (context) => List.generate(
-                    6,
-                    (index) => PopupMenuItem(
-                      value: index + 1,
-                      child: Text('${index + 1}', style: TextStyles.bold16),
-                    ),
-                  ),
-              child: Container(
-                decoration: const BoxDecoration(
-                  color: AppColors.klightGrayColor,
-                  borderRadius: BorderRadius.all(Radius.circular(50)),
-                ),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 4,
-                ),
-                child: Text('$maxWeight', style: TextStyles.semiBold16),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-}

@@ -24,15 +24,14 @@ class Checkout2Review extends StatelessWidget {
       debugPrint('Checkout2Review: Processing ${selectedItems.length} items');
       for (var item in selectedItems) {
         debugPrint('Checkout2Review: Item = $item');
-        if (!item.containsKey('productData') ||
-            !item.containsKey('totalPrice')) {
+        if (!item.containsKey('productData')) {
           debugPrint('Checkout2Review: Invalid item structure: $item');
         }
       }
     }
 
     final totalPrice = selectedItems.fold<double>(0, (sum, item) {
-      final price = item['totalPrice'];
+      final price = item['productData']['price_per_kg'];
       if (price is num) {
         return sum + price.toDouble();
       }
@@ -114,18 +113,12 @@ class Checkout2Review extends StatelessWidget {
                                     style: TextStyles.semiBold16,
                                     overflow: TextOverflow.ellipsis,
                                   ),
-                                  // Text(
-                                  //   'الكمية: ${item['quantity']}',
-                                  //   style: TextStyles.regular13.copyWith(
-                                  //     color: AppColors.kGrayColor,
-                                  //   ),
-                                  // ),
                                 ],
                               ),
                             ),
                             // السعر
                             Text(
-                              '${item['totalPrice']} دينار',
+                              '${productData['price_per_kg']} دينار',
                               style: TextStyles.bold16.copyWith(
                                 color: AppColors.kprimaryColor,
                               ),
@@ -140,7 +133,7 @@ class Checkout2Review extends StatelessWidget {
                     children: [
                       const Text('الإجمالي:', style: TextStyles.bold19),
                       Text(
-                        '$totalPrice دينار',
+                        ' $totalPrice دينار',
                         style: TextStyles.bold19.copyWith(
                           color: AppColors.kprimaryColor,
                         ),
