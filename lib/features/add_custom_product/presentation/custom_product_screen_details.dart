@@ -17,6 +17,7 @@ import 'package:hadaer_blady/features/home/presentation/home_screen.dart';
 import 'package:hadaer_blady/features/home/presentation/widgets/custom_offers_list/offer_carousel.dart';
 import 'package:hadaer_blady/features/product/widgets/farmer_info.dart';
 import 'package:hadaer_blady/features/product/widgets/location_info.dart';
+import 'package:hadaer_blady/features/product/widgets/product_details_content.dart';
 import 'package:hadaer_blady/features/product/widgets/rating_info.dart';
 import 'package:hadaer_blady/features/rateing/cubit/rating_cubit.dart';
 import 'package:hadaer_blady/features/rateing/cubit/rating_state.dart';
@@ -284,12 +285,20 @@ class _CustomProductDetailScreenState extends State<CustomProductDetailScreen> {
                             ),
                           ),
                           const SizedBox(height: 16),
-                          Text(
-                            widget.product.title,
-                            style: TextStyles.bold19.copyWith(
-                              color: Colors.black87,
-                              height: 1.3,
-                            ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                widget.product.title,
+                                style: TextStyles.bold19.copyWith(
+                                  color: Colors.black87,
+                                  height: 1.3,
+                                ),
+                              ),
+                              SimpleProductDateWidget(
+                                createdAt: widget.product.createdAt,
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 8),
                           Text(
@@ -314,6 +323,7 @@ class _CustomProductDetailScreenState extends State<CustomProductDetailScreen> {
                             ],
                           ),
                           const SizedBox(height: 16),
+
                           Align(
                             alignment: Alignment.centerLeft,
                             child: Container(
