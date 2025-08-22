@@ -1,16 +1,18 @@
-// ignore_for_file: public_member_api_docs, sort_constructors_first
+// nav_bar_entity.dart
 import 'package:flutter/material.dart';
 
 class NavBarEntity {
   final IconData activeIcon, inActiveIcon;
   final String name;
   final bool isForFarmerOnly;
+  final bool showBadge;
 
   NavBarEntity({
     required this.activeIcon,
     required this.inActiveIcon,
     required this.name,
     this.isForFarmerOnly = false,
+    this.showBadge = false,
   });
 }
 
@@ -25,7 +27,6 @@ List<NavBarEntity> get navBarItems => [
     inActiveIcon: Icons.store_outlined,
     name: 'الحضائر',
   ),
-
   NavBarEntity(
     activeIcon: Icons.add,
     inActiveIcon: Icons.add_circle_outline,
@@ -41,5 +42,6 @@ List<NavBarEntity> get navBarItems => [
     activeIcon: Icons.person,
     inActiveIcon: Icons.person_outlined,
     name: 'حسابي',
+    showBadge: true, // إضافة البادج للبروفايل
   ),
 ];

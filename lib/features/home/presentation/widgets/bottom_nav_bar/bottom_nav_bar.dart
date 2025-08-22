@@ -1,4 +1,7 @@
+// bottom_nav_bar.dart
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:hadaer_blady/core/services/farmer_request_order_service.dart';
 import 'package:hadaer_blady/core/utils/app_colors.dart';
 import 'package:hadaer_blady/features/home/domain/entitis/nav_bar_entity.dart';
 import 'package:hadaer_blady/features/home/presentation/widgets/bottom_nav_bar/navigation_bar.dart';
@@ -63,14 +66,19 @@ class BottomNavBar extends StatelessWidget {
                           isSelected
                               ? const EdgeInsets.symmetric(vertical: 8)
                               : EdgeInsets.zero,
-
                       child: AnimatedScale(
                         duration: const Duration(milliseconds: 100),
-                        scale: isSelected ? 1.1 : 1.0,
-                        child: CustomNavigationBarlogic(
-                          isSelected: isSelected,
-                          navBarEntity: entity,
-                        ),
+                        scale: isSelected ? 1.1 : 0.9,
+                        child:
+                            entity.showBadge && isFarmer
+                                ? NavigationBarWithBadge(
+                                  isSelected: isSelected,
+                                  navBarEntity: entity,
+                                )
+                                : CustomNavigationBarlogic(
+                                  isSelected: isSelected,
+                                  navBarEntity: entity,
+                                ),
                       ),
                     ),
                   ),
@@ -78,6 +86,75 @@ class BottomNavBar extends StatelessWidget {
               }).toList(),
         ),
       ),
+    );
+  }
+}
+
+class NavigationBarWithBadge extends StatelessWidget {
+  final bool isSelected;
+  final NavBarEntity navBarEntity;
+
+  const NavigationBarWithBadge({
+    super.key,
+    required this.isSelected,
+    required this.navBarEntity,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final FarmerOrderService farmerOrderService = FarmerOrderService();
+
+    return StreamBuilder<QuerySnapshot>(
+      stream: farmerOrderService.getFarmerOrders(),
+      builder: (context, snapshot) {
+        int pendingOrdersCount = 0;
+
+        if (snapshot.hasData && snapshot.data != null) {
+          final pendingOrders =
+              snapshot.data!.docs.where((doc) {
+                final data = doc.data() as Map<String, dynamic>;
+                final status = data['status'] as String? ?? '';
+                return status == 'pending';
+              }).toList();
+
+          pendingOrdersCount = pendingOrders.length;
+        }
+
+        return Stack(
+          clipBehavior: Clip.none,
+          children: [
+            CustomNavigationBarlogic(
+              isSelected: isSelected,
+              navBarEntity: navBarEntity,
+            ),
+            if (pendingOrdersCount > 0)
+              Positioned(
+                right: isSelected ? 25 : -5,
+                top: isSelected ? 4 : -8,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.kRedColor,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    pendingOrdersCount > 99
+                        ? '99+'
+                        : pendingOrdersCount.toString(),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 9,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
 }
