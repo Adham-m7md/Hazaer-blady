@@ -402,7 +402,7 @@ class CartItemWidget extends StatelessWidget {
                   ),
 
                   Text(
-                    '${productData['price_per_kg']} دينار',
+                    '${productData['price'] ?? productData['price_per_kg'] ?? 0}',
                     style: TextStyles.bold16.copyWith(
                       color: AppColors.kprimaryColor,
                     ),

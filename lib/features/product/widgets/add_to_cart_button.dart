@@ -10,15 +10,8 @@ import 'package:hadaer_blady/features/product/cubit/product_details_cubit.dart';
 
 class AddToCartButton extends StatelessWidget {
   final Map<String, dynamic> productData;
-  // final int quantity;
-  final double totalPrice;
 
-  const AddToCartButton({
-    super.key,
-    required this.productData,
-    // required this.quantity,
-    required this.totalPrice,
-  });
+  const AddToCartButton({super.key, required this.productData});
 
   Future<void> _handleAddToCart(BuildContext context) async {
     try {
@@ -37,8 +30,8 @@ class AddToCartButton extends StatelessWidget {
       await cartCubit.addToCart(
         productId: productId,
         productData: productData,
- 
-        totalPrice: totalPrice,
+
+        totalPrice: productData['price'] ?? 0,
       );
       // 2. التحقق من نوع المستخدم (مزارع أم مستخدم عادي)
       final isFarmer = await context.read<ProductDetailsCubit>().isFarmer();

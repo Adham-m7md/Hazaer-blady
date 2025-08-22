@@ -1,8 +1,10 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hadaer_blady/core/services/firebase_auth_service.dart';
 import 'package:hadaer_blady/core/services/get_it.dart';
 import 'package:hadaer_blady/core/services/rating_service.dart';
+import 'package:hadaer_blady/core/utils/app_colors.dart';
 import 'package:hadaer_blady/core/utils/app_directions.dart';
 import 'package:hadaer_blady/core/utils/app_text_styles.dart';
 import 'package:hadaer_blady/features/cart/cubit/cart_cubit.dart';
@@ -14,6 +16,7 @@ import 'package:hadaer_blady/features/product/widgets/rating_info.dart';
 import 'package:hadaer_blady/features/product/widgets/total_price_info.dart';
 import 'package:hadaer_blady/features/rateing/cubit/rating_cubit.dart';
 import 'package:hadaer_blady/features/rateing/cubit/rating_state.dart';
+import 'package:intl/intl.dart';
 
 class ProductDetailsContent extends StatefulWidget {
   final Map<String, dynamic> productData;
@@ -54,13 +57,6 @@ class _ProductDetailsContentState extends State<ProductDetailsContent> {
   Widget build(BuildContext context) {
     final pricePerKg =
         (widget.productData['price_per_kg'] as num?)?.toDouble() ?? 0.0;
-    // final minWeight =
-    //     (widget.productData['min_weight'] as num?)?.toDouble() ?? 0.0;
-    // final maxWeight =
-    //     (widget.productData['max_weight'] as num?)?.toDouble() ?? 0.0;
-    // final averageWeight = (minWeight + maxWeight) / 2;
-    // final totalPrice = (widget.quantity * pricePerKg * averageWeight)
-    //  .toStringAsFixed(2);
     final isOwnProduct =
         _currentUserId == (widget.productData['farmer_id'] ?? '');
     final farmerId = widget.productData['farmer_id'] ?? '';
@@ -86,8 +82,8 @@ class _ProductDetailsContentState extends State<ProductDetailsContent> {
                     ),
                   ],
                 ),
+                const SizedBox(height: 12),
                 LocationInfo(farmerData: widget.farmerData),
-                // إنشاء BlocProvider جديد مع تأخير بدء الاستماع للتقييمات
                 BlocProvider(
                   create:
                       (context) => RatingCubit(
@@ -97,30 +93,72 @@ class _ProductDetailsContentState extends State<ProductDetailsContent> {
                       ),
                   child: RatingWithBlocBuilder(farmerId: _farmerId),
                 ),
-                const SizedBox(height: 8),
-                Align(
-                  alignment: Alignment.center,
-                  child: Text(
-                    widget.productData['name'] ?? 'منتج غير معروف',
-                    style: TextStyles.semiBold19,
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Align(
-                  alignment: Alignment.center,
-                  child: Text(
-                    textAlign: TextAlign.center,
-                    widget.productData['description'] ?? 'لا يوجد وصف',
-                    style: TextStyles.semiBold16,
-                  ),
-                ),
                 const SizedBox(height: 16),
-                // QuantitySelector(quantity: widget.quantity),
-                // const SizedBox(height: 16),
-                // WeightInfo(minWeight: minWeight, maxWeight: maxWeight),
-                // const SizedBox(height: 16),
-                // PriceInfo(pricePerKg: pricePerKg),
+
+                // عرض اسم المنتج مع التاريخ في تصميم جميل
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppColors.kWiteColor,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.1),
+                        spreadRadius: 1,
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                    border: Border.all(
+                      color: AppColors.kprimaryColor.withOpacity(0.1),
+                      width: 1,
+                    ),
+                  ),
+                  child: Column(
+                    spacing: 8,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        widget.productData['name'] ?? 'منتج غير معروف',
+                        style: TextStyles.bold19.copyWith(
+                          color: AppColors.kBlackColor,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+
+                      Text(
+                        widget.productData['description'] ?? 'لا يوجد وصف',
+                        style: TextStyles.medium15.copyWith(
+                          color: Colors.grey.shade700,
+                          height: 1.5,
+                        ),
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.calendar_today_rounded,
+                            size: 16,
+                            color: AppColors.kprimaryColor.withOpacity(0.7),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            'تم الرفع: ',
+                            style: TextStyles.semiBold13.copyWith(
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                          SimpleProductDateWidget(
+                            createdAt: widget.productData['created_at'],
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 16),
                 const SizedBox(height: 16),
                 TotalPriceInfo(totalPrice: pricePerKg.toStringAsFixed(2)),
                 SizedBox(height: context.screenHeight * 0.07),
@@ -129,8 +167,7 @@ class _ProductDetailsContentState extends State<ProductDetailsContent> {
                     create: (context) => CartCubit(),
                     child: AddToCartButton(
                       productData: widget.productData,
-                      // quantity: widget.quantity,
-                      totalPrice: double.parse(pricePerKg.toStringAsFixed(2)),
+                      // totalPrice: double.parse(pricePerKg.toStringAsFixed(2)),
                     ),
                   ),
               ],
@@ -149,7 +186,6 @@ class RatingWithBlocBuilder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // تأكد من استدعاء refreshRatings لضمان بدء التحميل
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final cubit = BlocProvider.of<RatingCubit>(context);
       cubit.refreshRatings();
@@ -157,7 +193,6 @@ class RatingWithBlocBuilder extends StatelessWidget {
 
     return BlocBuilder<RatingCubit, RatingState>(
       builder: (context, state) {
-        // عرض بيانات التقييم بناءً على حالة الكيوبت
         if (state is RatingLoadingState) {
           return const Center(
             child: Padding(
@@ -166,7 +201,6 @@ class RatingWithBlocBuilder extends StatelessWidget {
             ),
           );
         } else if (state is RatingErrorState) {
-          // عرض واجهة أكثر وضوحًا في حالة الخطأ
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 8.0),
             child: Row(
@@ -190,7 +224,6 @@ class RatingWithBlocBuilder extends StatelessWidget {
           );
         }
 
-        // حالة افتراضية عندما لا توجد بيانات بعد
         return Padding(
           padding: const EdgeInsets.symmetric(vertical: 8.0),
           child: Row(
@@ -207,6 +240,61 @@ class RatingWithBlocBuilder extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+class SimpleProductDateWidget extends StatelessWidget {
+  final dynamic createdAt;
+
+  const SimpleProductDateWidget({super.key, required this.createdAt});
+
+  String _formatDate(dynamic timestamp) {
+    try {
+      DateTime dateTime;
+
+      if (timestamp is Timestamp) {
+        dateTime = timestamp.toDate();
+      } else if (timestamp is String) {
+        dateTime = DateTime.parse(timestamp);
+      } else if (timestamp is DateTime) {
+        dateTime = timestamp;
+      } else {
+        return 'تاريخ غير محدد';
+      }
+
+      final localDateTime = dateTime.toLocal();
+      final now = DateTime.now();
+      final difference = now.difference(localDateTime);
+
+      if (difference.inMinutes < 1) {
+        return 'الآن';
+      } else if (difference.inMinutes < 60) {
+        return 'منذ ${difference.inMinutes}د';
+      } else if (difference.inHours < 24) {
+        return 'منذ ${difference.inHours}س';
+      } else if (difference.inDays < 30) {
+        return 'منذ ${difference.inDays} يوم';
+      } else {
+        return DateFormat('dd/MM/yyyy').format(localDateTime);
+      }
+    } catch (e) {
+      return 'تاريخ غير صحيح';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        _formatDate(createdAt),
+        style: TextStyles.semiBold13.copyWith(color: Colors.grey.shade600),
+      ),
     );
   }
 }

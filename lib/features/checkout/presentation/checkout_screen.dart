@@ -36,7 +36,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   void initState() {
     super.initState();
     pageController = PageController();
-    debugPrint('CheckoutScreen: Initial selectedItems = ${widget.selectedItems}');
+    debugPrint(
+      'CheckoutScreen: Initial selectedItems = ${widget.selectedItems}',
+    );
   }
 
   @override
@@ -53,12 +55,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         debugPrint('Error: Cart is empty');
         showDialog(
           context: context,
-          builder: (context) => CustomeShowDialog(
-            text: 'السلة فارغة',
-            buttonText: 'حسنًا',
-            onPressed: () => Navigator.pop(context),
-            imagePath: Assets.imagesEror,
-          ),
+          builder:
+              (context) => CustomeShowDialog(
+                text: 'السلة فارغة',
+                buttonText: 'حسنًا',
+                onPressed: () => Navigator.pop(context),
+                imagePath: Assets.imagesEror,
+              ),
         );
         return;
       }
@@ -67,17 +70,20 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         debugPrint('Error: User data is null or empty');
         showDialog(
           context: context,
-          builder: (context) => CustomeShowDialog(
-            text: 'بيانات المستخدم غير مكتملة',
-            buttonText: 'حسنًا',
-            onPressed: () => Navigator.pop(context),
-            imagePath: Assets.imagesEror,
-          ),
+          builder:
+              (context) => CustomeShowDialog(
+                text: 'بيانات المستخدم غير مكتملة',
+                buttonText: 'حسنًا',
+                onPressed: () => Navigator.pop(context),
+                imagePath: Assets.imagesEror,
+              ),
         );
         return;
       }
 
-      debugPrint('Submitting order with userData: $userData, cartItems: $cartItems');
+      debugPrint(
+        'Submitting order with userData: $userData, cartItems: $cartItems',
+      );
 
       final orderNumber = await _checkoutService.submitOrder(
         userData: userData!,
@@ -109,26 +115,31 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         errorMessage = errorMessage.split('فشل في إنشاء الطلب').last.trim();
       }
       // إزالة أي نصوص متبقية قبل الرسالة المطلوبة
-      if (errorMessage.contains('يجب أن يكون جميع العناصر من نفس صاحب الحظيرة')) {
+      if (errorMessage.contains(
+        'يجب أن يكون جميع العناصر من نفس صاحب الحظيرة',
+      )) {
         errorMessage = 'يجب أن يكون جميع العناصر من نفس صاحب الحظيرة';
       }
       // إذا لم يتم التعرف على الرسالة، استخدم رسالة افتراضية
       errorMessage = errorMessage.isEmpty ? 'حدث خطأ غير متوقع' : errorMessage;
       showDialog(
         context: context,
-        builder: (context) => CustomeShowDialog(
-          text: errorMessage,
-          buttonText: 'حسنًا',
-          onPressed: () => Navigator.pop(context),
-          imagePath: Assets.imagesEror,
-        ),
+        builder:
+            (context) => CustomeShowDialog(
+              text: errorMessage,
+              buttonText: 'حسنًا',
+              onPressed: () => Navigator.pop(context),
+              imagePath: Assets.imagesEror,
+            ),
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    debugPrint('CheckoutScreen: Building with selectedItems = ${widget.selectedItems}');
+    debugPrint(
+      'CheckoutScreen: Building with selectedItems = ${widget.selectedItems}',
+    );
     if (widget.selectedItems.isEmpty) {
       debugPrint('CheckoutScreen: Warning - selectedItems is empty');
       return Scaffold(
@@ -193,32 +204,33 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 },
                 selectedItems: widget.selectedItems,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 36),
               // زر التالي أو الشراء
               currentIndexPage == 0
                   ? CustomButton(
-                      onPressed: () {
-                        if (_checkout1DataKey.currentState != null) {
-                          _checkout1DataKey.currentState!.submitData();
-                        } else {
-                          showDialog(
-                            context: context,
-                            builder: (context) => CustomeShowDialog(
-                              text: 'يرجى ملء جميع الحقول بشكل صحيح',
-                              buttonText: 'حسنًا',
-                              onPressed: () => Navigator.pop(context),
-                              imagePath: Assets.imagesEror,
-                            ),
-                          );
-                        }
-                      },
-                      text: 'التالي',
-                    )
+                    onPressed: () {
+                      if (_checkout1DataKey.currentState != null) {
+                        _checkout1DataKey.currentState!.submitData();
+                      } else {
+                        showDialog(
+                          context: context,
+                          builder:
+                              (context) => CustomeShowDialog(
+                                text: 'يرجى ملء جميع الحقول بشكل صحيح',
+                                buttonText: 'حسنًا',
+                                onPressed: () => Navigator.pop(context),
+                                imagePath: Assets.imagesEror,
+                              ),
+                        );
+                      }
+                    },
+                    text: 'التالي',
+                  )
                   : CustomCartButton(
-                      onPressed: _submitOrder,
-                      text: 'الشراء',
-                      enabled: userData != null,
-                    ),
+                    onPressed: _submitOrder,
+                    text: 'الشراء',
+                    enabled: userData != null,
+                  ),
             ],
           ),
         ),

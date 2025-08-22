@@ -31,12 +31,13 @@ class Checkout2Review extends StatelessWidget {
     }
 
     final totalPrice = selectedItems.fold<double>(0, (sum, item) {
-      final price = item['productData']['price_per_kg'];
-      if (price is num) {
-        return sum + price.toDouble();
-      }
-      debugPrint('Checkout2Review: Invalid totalPrice for item: $item');
-      return sum;
+      final pricePerKg = item['productData']['price_per_kg'];
+      final priceOffer = item['productData']['price'];
+
+      double price1 = (pricePerKg is num) ? pricePerKg.toDouble() : 0;
+      double price2 = (priceOffer is num) ? priceOffer.toDouble() : 0;
+
+      return sum + price1 + price2;
     });
 
     return SingleChildScrollView(
@@ -76,31 +77,18 @@ class Checkout2Review extends StatelessWidget {
                             Container(
                               width: 50,
                               height: 50,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(8.0),
-                                color: AppColors.klightGrayColor,
+                              color: AppColors.kFillGrayColor,
+                              child: Image.network(
+                                productData['image_url'] ??
+                                    productData['imageUrl'] ??
+                                    '',
+                                width: 50,
+                                height: 50,
+                                fit: BoxFit.cover,
+                                errorBuilder:
+                                    (context, error, stackTrace) =>
+                                        const Icon(Icons.error),
                               ),
-                              child:
-                                  productData['image_url'] != null
-                                      ? ClipRRect(
-                                        borderRadius: BorderRadius.circular(
-                                          8.0,
-                                        ),
-                                        child: Image.network(
-                                          productData['image_url'],
-                                          fit: BoxFit.cover,
-                                          errorBuilder:
-                                              (context, error, stackTrace) =>
-                                                  const Icon(
-                                                    Icons.error,
-                                                    color: Colors.red,
-                                                  ),
-                                        ),
-                                      )
-                                      : const Icon(
-                                        Icons.image_not_supported,
-                                        color: Colors.grey,
-                                      ),
                             ),
                             const SizedBox(width: 12),
                             // تفاصيل المنتج
@@ -118,7 +106,7 @@ class Checkout2Review extends StatelessWidget {
                             ),
                             // السعر
                             Text(
-                              '${productData['price_per_kg']} دينار',
+                              '${productData['price'] ?? productData['price_per_kg'] ?? 0}',
                               style: TextStyles.bold16.copyWith(
                                 color: AppColors.kprimaryColor,
                               ),
