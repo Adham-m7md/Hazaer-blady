@@ -1,4 +1,6 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:hadaer_blady/core/services/farmer_request_order_service.dart';
 import 'package:hadaer_blady/core/services/firebase_auth_service.dart';
 import 'package:hadaer_blady/core/services/get_it.dart';
 import 'package:hadaer_blady/core/utils/app_colors.dart';
@@ -24,6 +26,7 @@ class ProfileScreenBody extends StatefulWidget {
 
 class _ProfileScreenBodyState extends State<ProfileScreenBody> {
   final FirebaseAuthService firebaseAuthService = getIt<FirebaseAuthService>();
+  final FarmerOrderService farmerOrderService = FarmerOrderService();
   bool isCoopOwner = false;
   bool isAdmin = false;
   bool isLoading = true;
@@ -80,7 +83,6 @@ class _ProfileScreenBodyState extends State<ProfileScreenBody> {
                 ),
               ),
 
-              // Only show "حظيرتي" for coop owners
               if (isCoopOwner)
                 InkWell(
                   onTap: () {
@@ -102,16 +104,12 @@ class _ProfileScreenBodyState extends State<ProfileScreenBody> {
                     titelText: 'إضافة عرض خاص ',
                   ),
                 ),
+
               if (isCoopOwner)
-                InkWell(
-                  onTap: () {
-                    Navigator.pushNamed(context, FarmerRequestOrdersScreen.id);
-                  },
-                  child: const CustomeRowProfileContent(
-                    icon: Icons.inventory_2_outlined,
-                    titelText: 'الطلبات الواردة',
-                  ),
+                FarmerOrdersRowWithBadge(
+                  farmerOrderService: farmerOrderService,
                 ),
+
               InkWell(
                 onTap: () {
                   Navigator.pushNamed(context, MyOrders.id);
@@ -154,7 +152,7 @@ class _ProfileScreenBodyState extends State<ProfileScreenBody> {
                 child: Container(
                   height: 30,
                   width: double.infinity,
-                  color:const Color(0xffEBF9F1),
+                  color: const Color(0xffEBF9F1),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -176,5 +174,101 @@ class _ProfileScreenBodyState extends State<ProfileScreenBody> {
             ],
           ),
         );
+  }
+}
+
+// Widget بديل أكثر تفصيلاً (اختياري)
+class FarmerOrdersRowWithBadge extends StatelessWidget {
+  final FarmerOrderService farmerOrderService;
+
+  const FarmerOrdersRowWithBadge({super.key, required this.farmerOrderService});
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<QuerySnapshot>(
+      stream: farmerOrderService.getFarmerOrders(),
+      builder: (context, snapshot) {
+        int pendingOrdersCount = 0;
+
+        if (snapshot.hasData && snapshot.data != null) {
+          final pendingOrders =
+              snapshot.data!.docs.where((doc) {
+                final data = doc.data() as Map<String, dynamic>;
+                final status = data['status'] as String? ?? '';
+                return status == 'pending';
+              }).toList();
+
+          pendingOrdersCount = pendingOrders.length;
+        }
+
+        return InkWell(
+          onTap: () {
+            Navigator.pushNamed(context, FarmerRequestOrdersScreen.id);
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Row(
+              children: [
+                const Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Icon(
+                      Icons.inventory_2_outlined,
+                      color: AppColors.kBlackColor,
+                      size: 24,
+                    ),
+                  ],
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'الطلبات الواردة',
+                          style: TextStyles.semiBold16.copyWith(
+                            color: AppColors.kGrayColor,
+                          ),
+                        ),
+                      ),
+                      if (pendingOrdersCount > 0) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.kRedColor,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            pendingOrdersCount > 99
+                                ? '99+'
+                                : pendingOrdersCount.toString(),
+                            style: TextStyles.bold13.copyWith(
+                              color: Colors.white,
+                              fontSize: 9,
+                            ),
+                          ),
+                        ),
+                      ],
+                      const SizedBox(width: 8),
+                      const Padding(
+                        padding: EdgeInsets.only(left: 12),
+                        child: Icon(
+                          Icons.arrow_forward_ios,
+                          color: AppColors.kprimaryColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 }
