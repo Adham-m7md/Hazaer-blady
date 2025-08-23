@@ -33,7 +33,7 @@ class MyCustomCheckTogel extends StatelessWidget {
                   ? Container(
                     height: context.screenHeight * 0.025,
                     width: context.screenWidth * 0.05,
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       color: AppColors.kprimaryColor,
                       shape: BoxShape.circle,
                     ),
@@ -44,7 +44,7 @@ class MyCustomCheckTogel extends StatelessWidget {
                   : Container(
                     height: context.screenHeight * 0.025,
                     width: context.screenWidth * 0.05,
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       color: AppColors.kGrayColor,
                       shape: BoxShape.circle,
                     ),

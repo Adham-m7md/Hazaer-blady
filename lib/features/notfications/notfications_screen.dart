@@ -487,154 +487,111 @@ class NotificationItem extends StatelessWidget {
     );
   }
 
-void _onNotificationTap(BuildContext context) {
-  log('=== Notification Tap Debug ===');
-  log('Notification ID: $notificationId');
-  log('Notification Data: $data');
-  log('User ID: $userId');
-  
-  // تحديد الإشعار كمقروء
-  _markAsRead();
+  void _onNotificationTap(BuildContext context) {
+    log('=== Notification Tap Debug ===');
+    log('Notification ID: $notificationId');
+    log('Notification Data: $data');
+    log('User ID: $userId');
 
-  // التحقق من نوع الإشعار والتنقل المناسب
-  final notificationType = data['type'] ?? 'new_product';
-  log('Notification Type: $notificationType');
+    // تحديد الإشعار كمقروء
+    _markAsRead();
 
-  switch (notificationType) {
-    case 'new_order':
-    case 'order_update':
-    case 'incoming_order':
-      log('Attempting to navigate to FarmerRequestOrdersScreen');
-      log('FarmerRequestOrdersScreen.id = ${FarmerRequestOrdersScreen.id}');
-      
-      // التحقق من وجود الكونتكست
-      if (!context.mounted) {
-        log('Context is not mounted, cannot navigate');
-        return;
-      }
-      
-      _navigateToOrdersScreenWithDebug(context);
-      break;
+    // التحقق من نوع الإشعار والتنقل المناسب
+    final notificationType = data['type'] ?? 'new_product';
+    final notificationTitle = data['title'] ?? '';
 
-    case 'new_product':
-    case 'product_update':
-      log('Attempting to navigate to product screen');
-      final productId = data['productId'] ?? '';
-      log('Product ID: $productId');
-      
-      if (productId.isNotEmpty) {
-        try {
+    log('Notification Type: $notificationType');
+    log('Notification Title: $notificationTitle');
+
+    // التحقق من العنوان أولاً
+    if (notificationTitle == 'طلب جديد وارد!') {
+      log('Detected order notification by title, navigating to orders screen');
+      _navigateToOrdersScreen(context);
+      return;
+    }
+
+    // التحقق من النوع كخيار ثانوي
+    switch (notificationType) {
+      case 'new_order':
+      case 'order_update':
+      case 'incoming_order':
+      case 'farmer_order':
+        log('Detected order notification by type, navigating to orders screen');
+        _navigateToOrdersScreen(context);
+        break;
+
+      case 'new_product':
+      case 'product_update':
+        log('Attempting to navigate to product screen');
+        final productId = data['productId'] ?? '';
+        log('Product ID: $productId');
+
+        if (productId.isNotEmpty) {
+          try {
+            context.read<NotificationsCubit>().onNotificationTap(
+              context,
+              notificationId,
+              productId,
+            );
+            log('Successfully called NotificationsCubit.onNotificationTap');
+          } catch (e) {
+            log('Error calling NotificationsCubit.onNotificationTap: $e');
+          }
+        } else {
+          log('Product ID is empty, cannot navigate');
+        }
+        break;
+
+      case 'general':
+      default:
+        log('General notification type');
+        final productId = data['productId'] ?? '';
+        if (productId.isNotEmpty) {
           context.read<NotificationsCubit>().onNotificationTap(
             context,
             notificationId,
             productId,
           );
-          log('Successfully called NotificationsCubit.onNotificationTap');
-        } catch (e) {
-          log('Error calling NotificationsCubit.onNotificationTap: $e');
+        } else {
+          log('No specific action for general notification without productId');
         }
-      } else {
-        log('Product ID is empty, cannot navigate');
-      }
-      break;
-
-    case 'general':
-    default:
-      log('General notification type');
-      final productId = data['productId'] ?? '';
-      if (productId.isNotEmpty) {
-        context.read<NotificationsCubit>().onNotificationTap(
-          context,
-          notificationId,
-          productId,
-        );
-      } else {
-        log('No specific action for general notification without productId');
-      }
-      break;
+        break;
+    }
+    log('=== End Notification Tap Debug ===');
   }
-  log('=== End Notification Tap Debug ===');
-}
 
-void _navigateToOrdersScreenWithDebug(BuildContext context) async {
-  log('=== Navigation Debug ===');
-  
-  try {
-    // التحقق من وجود الـ Navigator
-    final navigator = Navigator.of(context);
-    log('Navigator obtained successfully');
+  void _navigateToOrdersScreen(BuildContext context) async {
+    log('=== Navigation to Orders Screen ===');
 
-    // التحقق من وجود الـ route في الـ routes table
-    final routes = ModalRoute.of(context)?.settings.name;
-    log('Current route: $routes');
+    if (!context.mounted) {
+      log('Context is not mounted, cannot navigate');
+      return;
+    }
 
-    // محاولة التنقل باستخدام pushNamed
-    log('Attempting pushNamed with route: ${FarmerRequestOrdersScreen.id}');
-    
-    await navigator.pushNamed(FarmerRequestOrdersScreen.id).then((result) {
-      log('pushNamed completed successfully with result: $result');
-    }).catchError((error) {
-      log('pushNamed failed with error: $error');
-      throw error;
-    });
-    
-  } catch (e) {
-    log('pushNamed failed, attempting direct push: $e');
-    
     try {
-      // إذا فشل pushNamed، استخدم push مباشرة
-      log('Attempting direct push to FarmerRequestOrdersScreen');
-      
-      final result = await Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) {
-            log('Building FarmerRequestOrdersScreen');
-            return const FarmerRequestOrdersScreen();
-          },
-          settings: const RouteSettings(name: 'FarmerRequestOrdersScreen'),
-        ),
-      );
-      
-      log('Direct push completed successfully with result: $result');
-      
-    } catch (pushError) {
-      log('Direct push also failed: $pushError');
-      
+      // استخدام push مباشرة لضمان العمل
+      log('Navigating to FarmerRequestOrdersScreen');
+
+      await Navigator.pushNamed(context, FarmerRequestOrdersScreen.id);
+
+      log('Navigation completed successfully');
+    } catch (e) {
+      log('Navigation failed: $e');
+
       // إظهار رسالة خطأ للمستخدم
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('حدث خطأ في فتح صفحة الطلبات: $pushError'),
+            content: Text('حدث خطأ في فتح صفحة الطلبات: $e'),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 3),
           ),
         );
-        log('Error snackbar shown to user');
       }
     }
-  }
-  
-  log('=== End Navigation Debug ===');
-}
 
-// دالة إضافية للتحقق من حالة الـ routes
-// void _debugRoutes(BuildContext context) {
-//   try {
-//     final navigator = Navigator.of(context);
-//     log('Navigator state: ${navigator.toString()}');
-    
-//     // التحقق من الـ MaterialApp routes إذا كان متاحاً
-//     final materialApp = context.findAncestorWidgetOfExactType<MaterialApp>();
-//     if (materialApp != null) {
-//       log('MaterialApp found with routes');
-//     } else {
-//       log('MaterialApp not found in widget tree');
-//     }
-//   } catch (e) {
-//     log('Error debugging routes: $e');
-//   }
-// }
+    log('=== End Navigation to Orders Screen ===');
+  }
 
   void _markAsRead() {
     if (!isRead) {
