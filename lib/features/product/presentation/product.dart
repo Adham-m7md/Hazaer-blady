@@ -1,5 +1,6 @@
 import 'dart:developer';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -12,6 +13,7 @@ import 'package:hadaer_blady/core/widgets/custom_loading_indicator.dart';
 import 'package:hadaer_blady/features/product/presentation/product_details_screen.dart';
 import 'package:hadaer_blady/features/rateing/cubit/rating_cubit.dart';
 import 'package:hadaer_blady/features/rateing/cubit/rating_state.dart';
+import 'package:intl/intl.dart';
 
 class Product extends StatelessWidget {
   final Map<String, dynamic> product;
@@ -21,12 +23,34 @@ class Product extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    String formatDate(dynamic rawDate) {
+      if (rawDate == null) return "غير متوفر";
+
+      try {
+        DateTime dateTime;
+
+        if (rawDate is Timestamp) {
+          // لو جاي من Firestore كـ Timestamp
+          dateTime = rawDate.toDate();
+        } else if (rawDate is String) {
+          // لو راجع String عادي
+          dateTime = DateTime.parse(rawDate);
+        } else {
+          return "تاريخ غير صالح";
+        }
+
+        return DateFormat("d MMMM yyyy - hh:mm a", "ar").format(dateTime);
+      } catch (e) {
+        return "تاريخ غير صالح";
+      }
+    }
+
     final farmerId = product['farmer_id'] ?? '';
     log('Rendering Product with productId: $productId, product: $product');
+
     return GestureDetector(
       onTap: () {
         if (productId.isNotEmpty) {
-          log('Navigating to ProductDetails with productId: $productId');
           Navigator.push(
             context,
             MaterialPageRoute(
@@ -38,133 +62,144 @@ class Product extends StatelessWidget {
             ),
           );
         } else {
-          log('Error: Attempted navigation with empty productId');
           ScaffoldMessenger.of(
             context,
           ).showSnackBar(const SnackBar(content: Text('معرف المنتج غير صالح')));
         }
       },
-      child: Container(
-        width: context.screenWidth,
-        decoration: BoxDecoration(
-          color: AppColors.kFillGrayColor,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: AppColors.lightPrimaryColor.withAlpha(30)),
-        ),
+      child: Card(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        elevation: 4,
+        margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 6),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          padding: const EdgeInsets.all(12),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                spacing: 6,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    (product['name'] ?? 'منتج غير معروف').length > 10
-                        ? '${(product['name'] ?? 'منتج غير معروف').substring(0, 10)}...'
-                        : product['name'] ?? 'منتج غير معروف',
-                    style: TextStyles.semiBold19,
-                  ),
-                  FutureBuilder<Map<String, dynamic>>(
-                    future: ProductService().getFarmerData(
-                      product['farmer_id'],
-                    ),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const CustomLoadingIndicator();
-                      }
-                      if (snapshot.hasError) {
-                        log('Error fetching farmer data: ${snapshot.error}');
-                        return const Text(
-                          'خطأ في جلب بيانات الحظيرة',
-                          style: TextStyles.semiBold11,
-                        );
-                      }
-                      if (!snapshot.hasData) {
-                        return const Text(
-                          'لا توجد بيانات للحظيرة',
-                          style: TextStyles.semiBold16,
-                        );
-                      }
-                      final farmerData = snapshot.data!;
-                      return Text.rich(
-                        TextSpan(
-                          style: TextStyles.semiBold16,
-                          children: [
-                            const TextSpan(text: 'المدينة: '),
-                            TextSpan(text: farmerData['city'] ?? 'غير محدد'),
-                          ],
+              /// صورة المنتج
+              Hero(
+                tag: productId,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: Image.network(
+                    product['image_url'] ?? '',
+                    width: context.screenWidth * 0.3,
+                    height: context.screenHeight * 0.14,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        color: AppColors.kFillGrayColor,
+                        width: context.screenWidth * 0.3,
+                        height: context.screenHeight * 0.14,
+                        child: const Center(
+                          child: Icon(
+                            Icons.image_not_supported,
+                            size: 40,
+                            color: Colors.grey,
+                          ),
                         ),
                       );
                     },
                   ),
-                  Text.rich(
-                    TextSpan(
-                      style: TextStyles.semiBold16,
+                ),
+              ),
+              const SizedBox(width: 12),
+
+              /// تفاصيل المنتج
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  spacing: 6,
+                  children: [
+                    Text(
+                      (product['name'] ?? 'منتج غير معروف'),
+                      style: TextStyles.semiBold19,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+
+                    /// المدينة
+                    FutureBuilder<Map<String, dynamic>>(
+                      future: ProductService().getFarmerData(farmerId),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const CustomLoadingIndicator();
+                        }
+                        if (snapshot.hasError) {
+                          return const Text(
+                            'خطأ في جلب بيانات الحظيرة',
+                            style: TextStyles.semiBold11,
+                          );
+                        }
+                        if (!snapshot.hasData) {
+                          return const Text(
+                            'لا توجد بيانات للحظيرة',
+                            style: TextStyles.semiBold16,
+                          );
+                        }
+                        final farmerData = snapshot.data!;
+                        return Row(
+                          children: [
+                            const Icon(
+                              Icons.location_on,
+                              size: 18,
+                              color: Colors.redAccent,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              farmerData['city'] ?? 'غير محدد',
+                              style: TextStyles.semiBold16,
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+
+                    /// السعر
+                    Row(
                       children: [
-                        const TextSpan(text: 'الوزن: '),
-                        TextSpan(
-                          text:
-                              '${product['min_weight'] ?? 0}~${product['max_weight'] ?? 0} كيلو',
+                        const Icon(
+                          Icons.attach_money,
+                          size: 18,
+                          color: Colors.green,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          "${product['price_per_kg'] ?? 0} دينار ",
+                          style: TextStyles.semiBold16,
                         ),
                       ],
                     ),
-                  ),
-                  Row(
-                    mainAxisSize:
-                        MainAxisSize
-                            .min, // Adjusts the row size to fit its content
-                    children: [
-                      const Text('السعر: ', style: TextStyles.semiBold16),
-                      Text(
-                        _truncateText(
-                          '${product['price_per_kg'] ?? 0} دينار',
-                          6,
+
+                    /// التقييم
+                    BlocProvider(
+                      create:
+                          (context) => RatingCubit(
+                            ratingService: RatingService(),
+                            auth: FirebaseAuth.instance,
+                            userId: farmerId,
+                          ),
+                      child: const RatingDisplay(),
+                    ),
+
+                    /// وقت الإضافة (Created At)
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.access_time,
+                          size: 16,
+                          color: Colors.blueGrey,
                         ),
-                        style: TextStyles.semiBold16,
-                      ),
-                    ],
-                  ),
-                  // Fetch and display farmer's ratings
-                  BlocProvider(
-                    create:
-                        (context) => RatingCubit(
-                          ratingService: RatingService(),
-                          auth: FirebaseAuth.instance,
-                          userId: farmerId,
+                        const SizedBox(width: 4),
+                        Text(
+                          formatDate(product['created_at']),
+                          style: TextStyles.semiBold11.copyWith(
+                            color: Colors.grey[700],
+                          ),
                         ),
-                    child: const RatingDisplay(),
-                  ),
-                ],
-              ),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(24),
-                child: Container(
-                  width: context.screenWidth * 0.325,
-                  height: context.screenHeight * 0.15,
-                  color: AppColors.kFillGrayColor,
-                  child: Image.network(
-                    product['image_url'] ?? '',
-                    width: 120,
-                    height: 120,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      log('Image load error for URL: ${product['image_url']}');
-                      return const Center(
-                        child: Text(
-                          'لا يوجد صورة لتحميلها ',
-                          style: TextStyles.semiBold16,
-                        ),
-                      );
-                    },
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) {
-                        return child;
-                      }
-                      return const Center(child: CustomLoadingIndicator());
-                    },
-                  ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -186,7 +221,6 @@ class RatingDisplay extends StatelessWidget {
           return const CustomLoadingIndicator();
         }
         if (state is RatingErrorState) {
-          log('Error fetching ratings: ${state.message}');
           return const Text(
             'خطأ في جلب التقييمات',
             style: TextStyles.semiBold16,
@@ -196,30 +230,17 @@ class RatingDisplay extends StatelessWidget {
           final averageRating = state.averageRating;
           return Row(
             children: [
-              const Text('التقييمات :', style: TextStyles.semiBold16),
-              const SizedBox(width: 8),
-              Row(
-                children: [
-                  Text(
-                    averageRating.toStringAsFixed(1),
-                    style: TextStyles.semiBold16,
-                  ),
-                  const Icon(Icons.star, color: Color(0xffFFC529), size: 28),
-                ],
+              const Icon(Icons.star, color: Color(0xffFFC529), size: 20),
+              const SizedBox(width: 4),
+              Text(
+                averageRating.toStringAsFixed(1),
+                style: TextStyles.semiBold16,
               ),
             ],
           );
         }
-        // حالة افتراضية (لا توجد تقييمات)
         return const Text('لا توجد تقييمات', style: TextStyles.semiBold16);
       },
     );
   }
-}
-
-String _truncateText(String text, int maxLength) {
-  if (text.length <= maxLength) {
-    return text;
-  }
-  return '${text.substring(0, maxLength)}...';
 }

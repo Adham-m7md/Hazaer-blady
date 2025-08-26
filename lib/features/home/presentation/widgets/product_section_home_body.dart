@@ -23,7 +23,6 @@ class _ProductsSectionWidgetState extends State<ProductsSectionWidget> {
   @override
   Widget build(BuildContext context) {
     return Column(
-      spacing: 8,
       children: [
         // Header with filter
         Row(
@@ -31,38 +30,27 @@ class _ProductsSectionWidgetState extends State<ProductsSectionWidget> {
           children: [
             const Text('المنتجات :', style: TextStyles.bold16),
             PopupMenuButton<String>(
-              icon: const Icon(
-                Icons.filter_list,
-                color: AppColors.kGrayColor,
-              ),
+              icon: const Icon(Icons.filter_list, color: AppColors.kGrayColor),
               onSelected: (value) {
                 setState(() {
                   selectedFilter = value;
                 });
               },
-              itemBuilder: (context) => [
-                const PopupMenuItem(
-                  value: 'highest_rated',
-                  child: Text(
-                    'الأكثر تقييما',
-                    style: TextStyles.bold16,
-                  ),
-                ),
-                const PopupMenuItem(
-                  value: 'nearest',
-                  child: Text(
-                    'الأقرب إليك',
-                    style: TextStyles.bold16,
-                  ),
-                ),
-                const PopupMenuItem(
-                  value: 'newest',
-                  child: Text(
-                    'الأحدث',
-                    style: TextStyles.bold16,
-                  ),
-                ),
-              ],
+              itemBuilder:
+                  (context) => [
+                    const PopupMenuItem(
+                      value: 'highest_rated',
+                      child: Text('الأكثر تقييما', style: TextStyles.bold16),
+                    ),
+                    const PopupMenuItem(
+                      value: 'nearest',
+                      child: Text('الأقرب إليك', style: TextStyles.bold16),
+                    ),
+                    const PopupMenuItem(
+                      value: 'newest',
+                      child: Text('الأحدث', style: TextStyles.bold16),
+                    ),
+                  ],
             ),
           ],
         ),
@@ -75,9 +63,7 @@ class _ProductsSectionWidgetState extends State<ProductsSectionWidget> {
               return Container(
                 height: MediaQuery.of(context).size.height * 0.5,
                 color: AppColors.kWiteColor,
-                child: const Center(
-                  child: CustomLoadingIndicator(),
-                ),
+                child: const Center(child: CustomLoadingIndicator()),
               );
             }
             if (snapshot.hasError) {
@@ -133,10 +119,14 @@ class _ProductsSectionWidgetState extends State<ProductsSectionWidget> {
 
         final sortedProducts = ratingSnapshot.data!;
         return _buildProductsList(
-          sortedProducts.map((item) => {
-            'product': item['product'] as Map<String, dynamic>,
-            'productId': item['productId'] as String,
-          }).toList(),
+          sortedProducts
+              .map(
+                (item) => {
+                  'product': item['product'] as Map<String, dynamic>,
+                  'productId': item['productId'] as String,
+                },
+              )
+              .toList(),
         );
       },
     );
@@ -166,8 +156,12 @@ class _ProductsSectionWidgetState extends State<ProductsSectionWidget> {
               return const Center(child: CustomLoadingIndicator());
             }
             if (distanceSnapshot.hasError) {
-              log('Error sorting products by distance: ${distanceSnapshot.error}');
-              return const Center(child: Text('خطأ في تصفية المنتجات حسب الموقع'));
+              log(
+                'Error sorting products by distance: ${distanceSnapshot.error}',
+              );
+              return const Center(
+                child: Text('خطأ في تصفية المنتجات حسب الموقع'),
+              );
             }
             if (!distanceSnapshot.hasData || distanceSnapshot.data!.isEmpty) {
               // Fallback to newest filter if no products or location data
@@ -181,8 +175,9 @@ class _ProductsSectionWidgetState extends State<ProductsSectionWidget> {
 
             final sortedProducts = distanceSnapshot.data!;
             // Check if any products have valid distances
-            bool hasValidDistances =
-                sortedProducts.any((item) => (item['distance'] as double).isFinite);
+            bool hasValidDistances = sortedProducts.any(
+              (item) => (item['distance'] as double).isFinite,
+            );
             if (!hasValidDistances) {
               // Fallback to newest filter if no valid location data
               WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -200,7 +195,10 @@ class _ProductsSectionWidgetState extends State<ProductsSectionWidget> {
                 return {
                   'product': {
                     ...product,
-                    'distance': distance.isFinite ? distance.toStringAsFixed(2) : 'غير معروف',
+                    'distance':
+                        distance.isFinite
+                            ? distance.toStringAsFixed(2)
+                            : 'غير معروف',
                   },
                   'productId': item['productId'] as String,
                 };
@@ -213,30 +211,40 @@ class _ProductsSectionWidgetState extends State<ProductsSectionWidget> {
   }
 
   Widget _buildNewestProducts(List<QueryDocumentSnapshot> products) {
-    final sortedProducts = products.toList()
-      ..sort((a, b) {
-        final aTimestamp = (a.data() as Map<String, dynamic>)['created_at'] as Timestamp?;
-        final bTimestamp = (b.data() as Map<String, dynamic>)['created_at'] as Timestamp?;
-        if (aTimestamp == null && bTimestamp == null) return 0;
-        if (aTimestamp == null) return 1;
-        if (bTimestamp == null) return -1;
-        return bTimestamp.compareTo(aTimestamp); // Newest first
-      });
+    final sortedProducts =
+        products.toList()..sort((a, b) {
+          final aTimestamp =
+              (a.data() as Map<String, dynamic>)['created_at'] as Timestamp?;
+          final bTimestamp =
+              (b.data() as Map<String, dynamic>)['created_at'] as Timestamp?;
+          if (aTimestamp == null && bTimestamp == null) return 0;
+          if (aTimestamp == null) return 1;
+          if (bTimestamp == null) return -1;
+          return bTimestamp.compareTo(aTimestamp); // Newest first
+        });
 
     return _buildProductsList(
-      sortedProducts.map((doc) => {
-        'product': doc.data() as Map<String, dynamic>,
-        'productId': doc.id,
-      }).toList(),
+      sortedProducts
+          .map(
+            (doc) => {
+              'product': doc.data() as Map<String, dynamic>,
+              'productId': doc.id,
+            },
+          )
+          .toList(),
     );
   }
 
   Widget _buildDefaultProducts(List<QueryDocumentSnapshot> products) {
     return _buildProductsList(
-      products.map((doc) => {
-        'product': doc.data() as Map<String, dynamic>,
-        'productId': doc.id,
-      }).toList(),
+      products
+          .map(
+            (doc) => {
+              'product': doc.data() as Map<String, dynamic>,
+              'productId': doc.id,
+            },
+          )
+          .toList(),
     );
   }
 
